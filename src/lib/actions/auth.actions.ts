@@ -63,6 +63,7 @@ export async function registerUser(prevState: any, formData: FormData) {
       name,
       email,
       password,
+      isAdmin: false, // Set default isAdmin status
     };
 
     users.push(newUser);
