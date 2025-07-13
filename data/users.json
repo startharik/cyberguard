@@ -3,7 +3,8 @@
     "id": "1329ea9c-a921-4535-9a82-65dd67b47dc1",
     "name": "john",
     "email": "j@gmail.com",
-    "password": "123456"
+    "password": "123456",
+    "isAdmin": true
   },
   {
     "id": "6cca72b1-c2aa-4ec1-b708-363f56c31530",
