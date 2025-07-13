@@ -4,5 +4,12 @@
     "name": "john",
     "email": "j@gmail.com",
     "password": "123456"
+  },
+  {
+    "id": "6cca72b1-c2aa-4ec1-b708-363f56c31530",
+    "name": "ton",
+    "email": "t@gmail.com",
+    "password": "123456",
+    "isAdmin": false
   }
 ]

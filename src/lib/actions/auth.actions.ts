@@ -63,7 +63,7 @@ export async function registerUser(prevState: any, formData: FormData) {
       name,
       email,
       password,
-      isAdmin: users.length === 0, // First user is an admin
+      isAdmin: users.length === 0, // First user is an admin, others are not.
     };
 
     users.push(newUser);
