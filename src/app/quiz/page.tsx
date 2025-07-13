@@ -56,7 +56,7 @@ export default async function QuizPage() {
                     </CardContent>
                     <CardFooter>
                          <Button asChild className="w-full">
-                            <Link href={`/quiz/results`}>
+                            <Link href={`/quiz/${quiz.id}`}>
                                 Start Quiz <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>
