@@ -1,68 +1,53 @@
+
 [
   {
     "id": "1",
-    "title": "Introduction to Cybersecurity",
+    "title": "Phishing Challenge",
     "questions": [
       {
         "id": "q1",
-        "text": "What does CIA stand for in cybersecurity?",
+        "text": "You receive an email from 'Netflix Support' (support@netflix-billing.com) stating there's a problem with your payment. It asks you to click a link to update your billing information. The link goes to 'http://netflix.account-update.com'. Is this a phishing attempt?",
         "options": [
-          "Confidentiality, Integrity, Availability",
-          "Central Intelligence Agency",
-          "Cybersecurity, Information, Assurance",
-          "Control, Inspect, Authorize"
+          "Phishing",
+          "Legitimate"
         ],
-        "correctAnswer": "Confidentiality, Integrity, Availability"
+        "correctAnswer": "Phishing"
       },
       {
         "id": "q2",
-        "text": "What is the most common type of cyber attack?",
+        "text": "You get a text message: 'Your package from Amazon has a shipping issue. Please confirm your details here to reschedule delivery: bit.ly/Amz-Track1'. Is this message safe to click?",
         "options": [
-          "Malware",
           "Phishing",
-          "DDoS",
-          "Man-in-the-middle"
+          "Legitimate"
         ],
         "correctAnswer": "Phishing"
       },
       {
         "id": "q3",
-        "text": "Which of the following is a strong password?",
+        "text": "An email arrives from 'Your Bank' (security@your-bank.com) with the subject 'Security Alert: Unusual Login Attempt'. It states there was a login from a new device and asks you to review the activity by logging in through a provided link. The link is 'https://your-bank.com/login-activity'. The email looks professional. Is it phishing?",
         "options": [
-          "12345678",
-          "password",
-          "Tr0ub4dor&3",
-          "qwerty"
+          "Phishing",
+          "Legitimate"
         ],
-        "correctAnswer": "Tr0ub4dor&3"
-      }
-    ]
-  },
-  {
-    "id": "2",
-    "title": "Network Security Basics",
-    "questions": [
-      {
-        "id": "q1",
-        "text": "What is a firewall used for?",
-        "options": [
-          "To create fires",
-          "To monitor and control incoming and outgoing network traffic",
-          "To cool down the server",
-          "To increase internet speed"
-        ],
-        "correctAnswer": "To monitor and control incoming and outgoing network traffic"
+        "correctAnswer": "Legitimate"
       },
       {
-        "id": "q2",
-        "text": "What does VPN stand for?",
+        "id": "q4",
+        "text": "A direct message on social media from a friend says, 'OMG! Is this you in this video?' with a link to a site you don't recognize. What should you do?",
         "options": [
-          "Virtual Private Network",
-          "Very Public Network",
-          "Visual Processing Node",
-          "Virtual Public Naming"
+          "Assume it's phishing and ask your friend about it separately.",
+          "Click the link to see if it's really you."
         ],
-        "correctAnswer": "Virtual Private Network"
+        "correctAnswer": "Assume it's phishing and ask your friend about it separately."
+      },
+      {
+        "id": "q5",
+        "text": "You receive an email with a PDF attachment named 'Invoice.pdf' from a company you don't do business with. The email body is empty. Is it safe to open the attachment?",
+        "options": [
+          "Phishing",
+          "Legitimate"
+        ],
+        "correctAnswer": "Phishing"
       }
     ]
   }
