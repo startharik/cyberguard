@@ -1,6 +1,7 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import {
   Card,
@@ -31,7 +32,7 @@ function SubmitButton({ mode }: { mode: Mode }) {
 
 export function AuthForm({ mode }: { mode: Mode }) {
   const action = mode === 'login' ? loginUser : registerUser;
-  const [state, formAction] = useFormState(action, { error: null });
+  const [state, formAction] = useActionState(action, { error: null });
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
