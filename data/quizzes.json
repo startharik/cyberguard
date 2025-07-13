@@ -1,0 +1,69 @@
+[
+  {
+    "id": "1",
+    "title": "Introduction to Cybersecurity",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "What does CIA stand for in cybersecurity?",
+        "options": [
+          "Confidentiality, Integrity, Availability",
+          "Central Intelligence Agency",
+          "Cybersecurity, Information, Assurance",
+          "Control, Inspect, Authorize"
+        ],
+        "correctAnswer": "Confidentiality, Integrity, Availability"
+      },
+      {
+        "id": "q2",
+        "text": "What is the most common type of cyber attack?",
+        "options": [
+          "Malware",
+          "Phishing",
+          "DDoS",
+          "Man-in-the-middle"
+        ],
+        "correctAnswer": "Phishing"
+      },
+      {
+        "id": "q3",
+        "text": "Which of the following is a strong password?",
+        "options": [
+          "12345678",
+          "password",
+          "Tr0ub4dor&3",
+          "qwerty"
+        ],
+        "correctAnswer": "Tr0ub4dor&3"
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "title": "Network Security Basics",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "What is a firewall used for?",
+        "options": [
+          "To create fires",
+          "To monitor and control incoming and outgoing network traffic",
+          "To cool down the server",
+          "To increase internet speed"
+        ],
+        "correctAnswer": "To monitor and control incoming and outgoing network traffic"
+      },
+      {
+        "id": "q2",
+        "text": "What does VPN stand for?",
+        "options": [
+          "Virtual Private Network",
+          "Very Public Network",
+          "Visual Processing Node",
+          "Virtual Public Naming"
+        ],
+        "correctAnswer": "Virtual Private Network"
+      }
+    ]
+  }
+]
