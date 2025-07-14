@@ -25,6 +25,7 @@ function SubmitButton({ mode }: { mode: Mode }) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" className="w-full" disabled={pending}>
+      {pending && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-background mr-2"></div>}
       {pending ? 'Processing...' : mode === 'login' ? 'Login' : 'Create an account'}
     </Button>
   );
