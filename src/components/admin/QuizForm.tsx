@@ -111,7 +111,7 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
             </div>
             <div className="grid gap-2">
               <Label>Options</Label>
-              {watchedQuestions[questionIndex].options.map((option, optionIndex) => (
+              {watchedQuestions[questionIndex]?.options.map((option, optionIndex) => (
                 <div key={optionIndex} className="flex items-center gap-2">
                   <Input
                     {...register(`questions.${questionIndex}.options.${optionIndex}`)}
@@ -128,7 +128,7 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
                     className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     <option value="">Select the correct answer</option>
-                    {watchedQuestions[questionIndex].options.map((opt, i) => (
+                    {watchedQuestions[questionIndex]?.options.map((opt, i) => (
                        opt && <option key={i} value={opt}>{opt}</option>
                     ))}
                 </select>
