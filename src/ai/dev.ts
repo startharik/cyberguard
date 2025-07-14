@@ -1,4 +1,4 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/cybermind-chatbot.ts';
+import '@/ai/flows/cyberguardian-chatbot.ts';

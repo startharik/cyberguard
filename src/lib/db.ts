@@ -94,7 +94,7 @@ export async function getDb() {
     return db;
   }
   
-  const dbPath = path.join(process.cwd(), 'data/cybermind.db');
+  const dbPath = path.join(process.cwd(), 'data/cyberguardian.db');
 
   const newDb = await open({
     filename: dbPath,

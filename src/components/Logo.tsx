@@ -1,4 +1,4 @@
-import { BrainCircuit } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 export function Logo({ size = 'md' }: { size?: 'sm' | 'md' }) {
@@ -14,9 +14,9 @@ export function Logo({ size = 'md' }: { size?: 'sm' | 'md' }) {
   };
   return (
     <Link href="/dashboard" className="flex items-center gap-2 outline-none">
-      <BrainCircuit className={`${sizes[size].icon} text-primary`} />
+      <ShieldCheck className={`${sizes[size].icon} text-primary`} />
       <h1 className={`${sizes[size].text} font-bold font-headline text-primary`}>
-        CyberMind
+        CyberGuardian
       </h1>
     </Link>
   );
