@@ -8,6 +8,7 @@ export interface User {
 
 export interface Question {
   id: string;
+  quizId?: string;
   text: string;
   options: string[];
   correctAnswer: string;
@@ -17,4 +18,5 @@ export interface Quiz {
   id:string;
   title: string;
   questions: Question[];
+  questionCount?: number;
 }

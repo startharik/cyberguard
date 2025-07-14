@@ -1,0 +1,125 @@
+'use server';
+
+import { z } from 'zod';
+import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
+import { getDb } from '@/lib/db';
+
+const questionSchema = z.object({
+  text: z.string().min(1, 'Question text is required.'),
+  options: z.array(z.string().min(1, 'Option text is required.')).min(2, 'At least two options are required.'),
+  correctAnswer: z.string().min(1, 'Correct answer is required.'),
+});
+
+const quizSchema = z.object({
+  title: z.string().min(1, 'Title is required.'),
+  questions: z.array(questionSchema).min(1, 'At least one question is required.'),
+});
+
+
+export async function createQuiz(prevState: any, formData: FormData) {
+  const parsedData = JSON.parse(formData.get('payload') as string);
+  const validatedFields = quizSchema.safeParse(parsedData);
+
+  if (!validatedFields.success) {
+    return {
+      error: validatedFields.error.flatten(),
+    };
+  }
+
+  const { title, questions } = validatedFields.data;
+
+  try {
+    const db = await getDb();
+    const quizId = crypto.randomUUID();
+
+    await db.run('INSERT INTO quizzes (id, title) VALUES (?, ?)', quizId, title);
+
+    for (const question of questions) {
+      const questionId = crypto.randomUUID();
+      await db.run(
+        'INSERT INTO questions (id, quizId, text, options, correctAnswer) VALUES (?, ?, ?, ?, ?)',
+        questionId,
+        quizId,
+        question.text,
+        JSON.stringify(question.options),
+        question.correctAnswer
+      );
+    }
+  } catch (e) {
+    console.error(e);
+    return { error: { formErrors: ['An unexpected error occurred. Please try again.'] } };
+  }
+
+  revalidatePath('/admin/quizzes');
+  redirect('/admin/quizzes');
+}
+
+export async function updateQuiz(prevState: any, formData: FormData) {
+  const quizId = formData.get('quizId') as string;
+  const parsedData = JSON.parse(formData.get('payload') as string);
+  const validatedFields = quizSchema.safeParse(parsedData);
+
+  if (!validatedFields.success) {
+    return {
+      error: validatedFields.error.flatten(),
+    };
+  }
+  
+  if(!quizId) {
+    return { error: { formErrors: ['Quiz ID is missing.'] } };
+  }
+
+  const { title, questions } = validatedFields.data;
+  
+  try {
+    const db = await getDb();
+    
+    // Update quiz title
+    await db.run('UPDATE quizzes SET title = ? WHERE id = ?', title, quizId);
+    
+    // Delete old questions
+    await db.run('DELETE FROM questions WHERE quizId = ?', quizId);
+
+    // Insert new questions
+    for (const question of questions) {
+        const questionId = crypto.randomUUID();
+        await db.run(
+            'INSERT INTO questions (id, quizId, text, options, correctAnswer) VALUES (?, ?, ?, ?, ?)',
+            questionId,
+            quizId,
+            question.text,
+            JSON.stringify(question.options),
+            question.correctAnswer
+        );
+    }
+  } catch (e) {
+     console.error(e);
+     return { error: { formErrors: ['An unexpected error occurred. Please try again.'] } };
+  }
+
+  revalidatePath('/admin/quizzes');
+  revalidatePath(`/quiz/${quizId}`);
+  redirect('/admin/quizzes');
+}
+
+export async function deleteQuiz(formData: FormData) {
+    const quizId = formData.get('quizId') as string;
+
+    if (!quizId) {
+        throw new Error('Quiz ID is required for deletion.');
+    }
+
+    try {
+        const db = await getDb();
+        await db.run('DELETE FROM questions WHERE quizId = ?', quizId);
+        await db.run('DELETE FROM quizzes WHERE id = ?', quizId);
+    } catch (e) {
+        console.error(e);
+        // In a real app, you might want to redirect with an error message.
+        throw new Error('Failed to delete quiz.');
+    }
+
+    revalidatePath('/admin/quizzes');
+    redirect('/admin/quizzes');
+}
