@@ -33,7 +33,7 @@ export default async function DashboardPage() {
     },
     {
       title: 'Admin Panel',
-      description: 'Manage quizzes and application settings.',
+      description: 'Manage quizzes, users, and settings.',
       href: '/admin/quizzes',
       icon: ShieldCheck,
       adminOnly: true,

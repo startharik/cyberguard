@@ -5,6 +5,7 @@ import {
   FileText,
   ShieldCheck,
   PanelLeft,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,11 +16,23 @@ import {
 import { Logo } from '@/components/Logo';
 import { UserNav } from './UserNav';
 import type { User } from '@/lib/types';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
   { href: '/chatbot', icon: Bot, label: 'AI Chatbot' },
   { href: '/quiz', icon: FileText, label: 'Quizzes' },
+];
+
+const adminNavItems = [
+    { href: '/admin/quizzes', label: 'Quiz Management' },
+    { href: '/admin/users', label: 'User Management' },
 ];
 
 export function AppLayout({
@@ -49,13 +62,29 @@ export function AppLayout({
                 </Link>
               ))}
                {user.isAdmin && (
-                <Link
-                  href="/admin/quizzes"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                >
-                  <ShieldCheck className="h-4 w-4" />
-                  Admin
-                </Link>
+                 <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1" className="border-b-0">
+                      <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:no-underline">
+                         <div className="flex items-center gap-3">
+                            <ShieldCheck className="h-4 w-4" />
+                            Admin
+                         </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="pl-8">
+                         <nav className="grid gap-1">
+                            {adminNavItems.map(item => (
+                                <Link
+                                    key={item.label}
+                                    href={item.href}
+                                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-xs"
+                                >
+                                    {item.label}
+                                </Link>
+                            ))}
+                         </nav>
+                      </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
               )}
             </nav>
           </div>
@@ -90,13 +119,29 @@ export function AppLayout({
                 </Link>
               ))}
                {user.isAdmin && (
-                <Link
-                  href="/admin/quizzes"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                >
-                  <ShieldCheck className="h-5 w-5" />
-                  Admin
-                </Link>
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1" className="border-b-0">
+                      <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:no-underline text-lg">
+                         <div className="flex items-center gap-3">
+                            <ShieldCheck className="h-5 w-5" />
+                            Admin
+                         </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="pl-8">
+                         <nav className="grid gap-1">
+                            {adminNavItems.map(item => (
+                                <Link
+                                    key={item.label}
+                                    href={item.href}
+                                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-base"
+                                >
+                                    {item.label}
+                                </Link>
+                            ))}
+                         </nav>
+                      </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
               )}
               </nav>
             </SheetContent>
