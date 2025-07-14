@@ -32,7 +32,18 @@ async function initializeDb(db: Database) {
             text TEXT NOT NULL,
             options TEXT NOT NULL,
             correctAnswer TEXT NOT NULL,
-            FOREIGN KEY (quizId) REFERENCES quizzes(id)
+            FOREIGN KEY (quizId) REFERENCES quizzes(id) ON DELETE CASCADE
+        );
+        
+        CREATE TABLE IF NOT EXISTS quiz_results (
+            id TEXT PRIMARY KEY,
+            userId TEXT NOT NULL,
+            quizId TEXT NOT NULL,
+            score INTEGER NOT NULL,
+            totalQuestions INTEGER NOT NULL,
+            completedAt DATETIME NOT NULL,
+            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (quizId) REFERENCES quizzes(id) ON DELETE CASCADE
         );
     `);
     console.log('Schema initialized.');
@@ -100,6 +111,8 @@ export async function getDb() {
     filename: dbPath,
     driver: sqlite3.Database,
   });
+  
+  await newDb.run('PRAGMA foreign_keys = ON');
 
   await initializeDb(newDb);
 

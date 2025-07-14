@@ -11,6 +11,29 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Bot, FileText, ArrowRight, ShieldCheck } from 'lucide-react';
+import type { QuizResult } from '@/lib/types';
+import { getDb } from '@/lib/db';
+import { ResultsChart } from '@/components/dashboard/ResultsChart';
+
+async function getQuizResults(userId: string): Promise<QuizResult[]> {
+    try {
+        const db = await getDb();
+        const results = await db.all<QuizResult[]>(
+            `SELECT qr.*, q.title as quizTitle 
+             FROM quiz_results qr
+             JOIN quizzes q ON qr.quizId = q.id
+             WHERE qr.userId = ?
+             ORDER BY qr.completedAt DESC
+             LIMIT 5`,
+            userId
+        );
+        return results;
+    } catch (error) {
+        console.error("Could not read quiz results from database:", error);
+        return [];
+    }
+}
+
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -41,6 +64,8 @@ export default async function DashboardPage() {
       adminOnly: true,
     }
   ];
+  
+  const quizResults = user.isAdmin ? [] : await getQuizResults(user.id);
 
   return (
     <AppLayout user={user}>
@@ -89,11 +114,17 @@ export default async function DashboardPage() {
                         Here's a summary of your recent quiz performance.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="text-center py-10 text-muted-foreground">
-                    <p>You haven't completed any quizzes yet.</p>
-                    <Button variant="link" asChild className="mt-2">
-                        <Link href="/quiz">Start your first quiz</Link>
-                    </Button>
+                <CardContent>
+                    {quizResults.length > 0 ? (
+                        <ResultsChart results={quizResults} />
+                    ) : (
+                        <div className="text-center py-10 text-muted-foreground">
+                            <p>You haven't completed any quizzes yet.</p>
+                            <Button variant="link" asChild className="mt-2">
+                                <Link href="/quiz">Start your first quiz</Link>
+                            </Button>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         )}

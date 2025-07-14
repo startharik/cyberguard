@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/lib/db';
+import { getCurrentUser } from '../session';
 
 const questionSchema = z.object({
   text: z.string().min(1, 'Question text is required.'),
@@ -75,6 +76,7 @@ export async function updateQuiz(prevState: any, formData: FormData) {
   try {
     const db = await getDb();
     
+    await db.run('BEGIN TRANSACTION');
     // Update quiz title
     await db.run('UPDATE quizzes SET title = ? WHERE id = ?', title, quizId);
     
@@ -93,7 +95,9 @@ export async function updateQuiz(prevState: any, formData: FormData) {
             question.correctAnswer
         );
     }
+    await db.run('COMMIT');
   } catch (e) {
+     await (await getDb()).run('ROLLBACK');
      console.error(e);
      return { error: { formErrors: ['An unexpected error occurred. Please try again.'] } };
   }
@@ -112,7 +116,6 @@ export async function deleteQuiz(formData: FormData) {
 
     try {
         const db = await getDb();
-        await db.run('DELETE FROM questions WHERE quizId = ?', quizId);
         await db.run('DELETE FROM quizzes WHERE id = ?', quizId);
     } catch (e) {
         console.error(e);
@@ -122,4 +125,29 @@ export async function deleteQuiz(formData: FormData) {
 
     revalidatePath('/admin/quizzes');
     redirect('/admin/quizzes');
+}
+
+
+export async function saveQuizResult(quizId: string, score: number, totalQuestions: number) {
+    const user = await getCurrentUser();
+    if (!user) {
+        throw new Error('User not authenticated');
+    }
+
+    try {
+        const db = await getDb();
+        await db.run(
+            'INSERT INTO quiz_results (id, userId, quizId, score, totalQuestions, completedAt) VALUES (?, ?, ?, ?, ?, ?)',
+            crypto.randomUUID(),
+            user.id,
+            quizId,
+            score,
+            totalQuestions,
+            new Date().toISOString()
+        );
+        revalidatePath('/dashboard');
+    } catch (e) {
+        console.error('Failed to save quiz result:', e);
+        // Handle error appropriately
+    }
 }

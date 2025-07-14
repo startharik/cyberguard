@@ -20,3 +20,13 @@ export interface Quiz {
   questions: Question[];
   questionCount?: number;
 }
+
+export interface QuizResult {
+    id: string;
+    userId: string;
+    quizId: string;
+    score: number;
+    totalQuestions: number;
+    completedAt: string;
+    quizTitle?: string;
+}

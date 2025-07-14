@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Quiz, Question } from '@/lib/types';
+import type { Quiz, Question, User } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -16,15 +16,17 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { ArrowRight, Check, X } from 'lucide-react';
+import { saveQuizResult } from '@/lib/actions/quiz.actions';
 
 type AnswerStatus = 'unanswered' | 'correct' | 'incorrect';
 
-export function QuizClient({ quiz }: { quiz: Quiz }) {
+export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
   const router = useRouter();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [answerStatus, setAnswerStatus] = useState<Record<string, AnswerStatus>>({});
   const [score, setScore] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentQuestion: Question = quiz.questions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1;
@@ -47,9 +49,11 @@ export function QuizClient({ quiz }: { quiz: Quiz }) {
     }
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (isLastQuestion) {
-      router.push(`/quiz/results?score=${score}&total=${quiz.questions.length}`);
+        setIsSubmitting(true);
+        await saveQuizResult(quiz.id, score, quiz.questions.length);
+        router.push(`/quiz/results?score=${score}&total=${quiz.questions.length}`);
     } else {
       setCurrentQuestionIndex(prev => prev + 1);
     }
@@ -103,9 +107,10 @@ export function QuizClient({ quiz }: { quiz: Quiz }) {
         </CardContent>
         <CardFooter className="flex justify-end">
           {status ? (
-             <Button onClick={handleNextQuestion}>
+             <Button onClick={handleNextQuestion} disabled={isSubmitting}>
+              {isSubmitting && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-background mr-2"></div>}
               {isLastQuestion ? 'Finish Quiz' : 'Next Question'}
-              <ArrowRight className="ml-2 h-4 w-4" />
+              {!isSubmitting && <ArrowRight className="ml-2 h-4 w-4" />}
             </Button>
           ) : (
             <Button onClick={handleSubmitAnswer} disabled={!selectedAnswers[currentQuestion.id]}>
