@@ -1,6 +1,5 @@
 'use client';
 
-import { useActionState } from 'react';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,6 +18,8 @@ import {
 } from '@/components/ui/card';
 import { Trash, PlusCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 const questionSchema = z.object({
   text: z.string().min(1, 'Question text is required.'),
@@ -34,6 +35,9 @@ const quizSchema = z.object({
 type QuizFormData = z.infer<typeof quizSchema>;
 
 export function QuizForm({ quiz }: { quiz?: Quiz }) {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  
   const {
     register,
     handleSubmit,
@@ -55,15 +59,26 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
   const watchedQuestions = useWatch({ control, name: "questions" });
 
   const action = quiz ? updateQuiz : createQuiz;
-  const [state, formAction] = useActionState(action, { error: null });
 
-  const onSubmit = (data: QuizFormData) => {
+  const onSubmit = async (data: QuizFormData) => {
+    setError(null);
     const formData = new FormData();
     formData.append('payload', JSON.stringify(data));
     if (quiz) {
       formData.append('quizId', quiz.id);
     }
-    formAction(formData);
+    
+    try {
+        const result = await action(null, formData);
+        if(result?.error) {
+            const errorMessages = Object.values(result.error).flat().join(', ');
+            setError(errorMessages || 'An unknown error occurred.');
+        } else {
+           router.push('/admin/quizzes');
+        }
+    } catch (e) {
+        setError('An unexpected error occurred.');
+    }
   };
   
   return (
@@ -147,9 +162,9 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
           </Button>
       </div>
       
-       {state?.error?.formErrors && (
+       {error && (
           <div className="text-sm text-destructive mt-4">
-            {state.error.formErrors.join(', ')}
+            {error}
           </div>
        )}
 

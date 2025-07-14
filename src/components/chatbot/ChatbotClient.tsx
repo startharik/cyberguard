@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { askCybersecurityQuestion } from '@/ai/flows/cybermind-chatbot';
+import { askCybersecurityQuestion } from '@/ai/flows/cyberguardian-chatbot';
 import type { User } from '@/lib/types';
 import { Bot, Send, User as UserIcon } from 'lucide-react';
 
@@ -96,7 +96,6 @@ export function ChatbotClient({ user }: { user: User }) {
                 </div>
                  {message.sender === 'user' && (
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={`https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
                     <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                   </Avatar>
                 )}
