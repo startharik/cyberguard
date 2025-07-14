@@ -15,7 +15,7 @@ export function ResultsChart({ results }: { results: QuizResult[] }) {
   return (
      <div className="h-[350px]">
         <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData}>
+        <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 70 }}>
             <XAxis
                 dataKey="name"
                 stroke="#888888"
@@ -28,14 +28,14 @@ export function ResultsChart({ results }: { results: QuizResult[] }) {
                     const [title, date] = payload.value.split('\n');
                     return (
                         <g transform={`translate(${x},${y})`}>
-                            <text x={0} y={0} dy={16} textAnchor="end" fill="#666" transform="rotate(-35)">
+                            <text x={0} y={0} dy={16} textAnchor="end" fill="hsl(var(--muted-foreground))" transform="rotate(-45)">
                                 <tspan x="0" dy="0.2em">{title}</tspan>
-                                <tspan x="0" dy="1.2em">{date}</tspan>
+                                {date && <tspan x="0" dy="1.2em">{date}</tspan>}
                             </text>
                         </g>
                     );
                 }}
-                height={60}
+                height={80}
             />
             <YAxis
                 stroke="#888888"
