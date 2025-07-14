@@ -24,12 +24,14 @@ export default async function DashboardPage() {
       description: 'Test your cybersecurity knowledge.',
       href: '/quiz',
       icon: FileText,
+      userOnly: true,
     },
     {
       title: 'Talk to AI',
       description: 'Ask our AI anything about security.',
       href: '/chatbot',
       icon: Bot,
+      userOnly: true,
     },
     {
       title: 'Admin Panel',
@@ -45,16 +47,19 @@ export default async function DashboardPage() {
       <div className="flex flex-col gap-4">
         <div className="space-y-1">
             <h1 className="text-3xl font-bold font-headline tracking-tight">
-                Welcome back, {user.name}!
+                {user.isAdmin ? 'Admin Dashboard' : `Welcome back, ${user.name}!`}
             </h1>
             <p className="text-muted-foreground">
-                Ready to level up your cybersecurity skills?
+                {user.isAdmin
+                    ? 'Manage your application content and users.'
+                    : 'Ready to level up your cybersecurity skills?'}
             </p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
              {features.map((feature) => {
                 if(feature.adminOnly && !user.isAdmin) return null;
+                if(feature.userOnly && user.isAdmin) return null;
                 return (
                     <Card key={feature.title}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -75,21 +80,23 @@ export default async function DashboardPage() {
                 );
              })}
         </div>
-
-         <Card>
-            <CardHeader>
-                <CardTitle className="font-headline">Latest Quiz Results</CardTitle>
-                <CardDescription>
-                    Here's a summary of your recent quiz performance.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center py-10 text-muted-foreground">
-                <p>You haven't completed any quizzes yet.</p>
-                <Button variant="link" asChild className="mt-2">
-                    <Link href="/quiz">Start your first quiz</Link>
-                </Button>
-            </CardContent>
-        </Card>
+        
+        {!user.isAdmin && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">Latest Quiz Results</CardTitle>
+                    <CardDescription>
+                        Here's a summary of your recent quiz performance.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="text-center py-10 text-muted-foreground">
+                    <p>You haven't completed any quizzes yet.</p>
+                    <Button variant="link" asChild className="mt-2">
+                        <Link href="/quiz">Start your first quiz</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        )}
       </div>
     </AppLayout>
   );
