@@ -12,18 +12,23 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import fs from 'fs/promises';
-import path from 'path';
 import type { Quiz } from '@/lib/types';
+import { getDb } from '@/lib/db';
 
 
 async function getQuizzes(): Promise<Quiz[]> {
-    const filePath = path.join(process.cwd(), 'data/quizzes.json');
     try {
-        const data = await fs.readFile(filePath, 'utf-8');
-        return JSON.parse(data);
+        const db = await getDb();
+        const quizzes = await db.all('SELECT id, title FROM quizzes');
+        
+        for (const quiz of quizzes) {
+            const questions = await db.all('SELECT id FROM questions WHERE quizId = ?', quiz.id);
+            quiz.questions = questions; // just need the count, so this is fine
+        }
+
+        return quizzes;
     } catch (error) {
-        console.error("Could not read quizzes file:", error);
+        console.error("Could not read quizzes from database:", error);
         return [];
     }
 }

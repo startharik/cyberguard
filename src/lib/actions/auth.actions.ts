@@ -3,11 +3,8 @@
 import { z } from 'zod';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import fs from 'fs/promises';
-import path from 'path';
 import type { User } from '@/lib/types';
-
-const usersPath = path.join(process.cwd(), 'data/users.json');
+import { getDb } from '@/lib/db';
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -19,24 +16,6 @@ const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
 });
-
-async function getUsers(): Promise<User[]> {
-  try {
-    const usersData = await fs.readFile(usersPath, 'utf-8');
-    return JSON.parse(usersData);
-  } catch (error) {
-    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
-      await fs.writeFile(usersPath, JSON.stringify([], null, 2));
-      return [];
-    }
-    console.error('Failed to read users file:', error);
-    return [];
-  }
-}
-
-async function saveUsers(users: User[]) {
-  await fs.writeFile(usersPath, JSON.stringify(users, null, 2));
-}
 
 export async function registerUser(prevState: any, formData: FormData) {
   const validatedFields = registerSchema.safeParse(Object.fromEntries(formData.entries()));
@@ -50,12 +29,16 @@ export async function registerUser(prevState: any, formData: FormData) {
   const { name, email, password } = validatedFields.data;
 
   try {
-    const users = await getUsers();
-    const existingUser = users.find(user => user.email === email);
+    const db = await getDb();
+    
+    const existingUser = await db.get('SELECT * FROM users WHERE email = ?', email);
 
     if (existingUser) {
       return { error: { form: 'User with this email already exists' } };
     }
+    
+    const userCountResult = await db.get('SELECT COUNT(*) as count FROM users');
+    const userCount = userCountResult.count;
 
     // In a real app, hash the password!
     const newUser: User = {
@@ -63,13 +46,20 @@ export async function registerUser(prevState: any, formData: FormData) {
       name,
       email,
       password,
-      isAdmin: users.length === 0, // First user is an admin, others are not.
+      isAdmin: userCount === 0, // First user is an admin
     };
 
-    users.push(newUser);
-    await saveUsers(users);
+    await db.run(
+        'INSERT INTO users (id, name, email, password, isAdmin) VALUES (?, ?, ?, ?, ?)',
+        newUser.id,
+        newUser.name,
+        newUser.email,
+        newUser.password,
+        newUser.isAdmin ? 1 : 0
+    );
 
   } catch (e) {
+    console.error(e);
     return { error: { form: 'An unexpected error occurred. Please try again.' } };
   }
 
@@ -88,8 +78,8 @@ export async function loginUser(prevState: any, formData: FormData) {
   const { email, password } = validatedFields.data;
 
   try {
-    const users = await getUsers();
-    const user = users.find(u => u.email === email);
+    const db = await getDb();
+    const user = await db.get<User>('SELECT * FROM users WHERE email = ?', email);
 
     if (!user || user.password !== password) {
       return { error: { form: 'Invalid email or password' } };
@@ -102,6 +92,7 @@ export async function loginUser(prevState: any, formData: FormData) {
       path: '/',
     });
   } catch (e) {
+     console.error(e);
      return { error: { form: 'An unexpected error occurred. Please try again.' } };
   }
 
