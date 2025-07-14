@@ -2,6 +2,8 @@
 
 CyberGuardian is a web application built with Next.js designed to make learning about cybersecurity engaging and interactive. It features AI-driven conversations, dynamic quizzes, and a comprehensive dashboard for users to track their progress. It also includes a full administrative panel for managing application content like quizzes and users.
 
+A detailed explanation of the codebase can be found in [`src/CODE_DOCUMENTATION.md`](./src/CODE_DOCUMENTATION.md).
+
 ## Key Features
 
 -   **User Authentication**: Secure login and registration system. The first user to register automatically becomes an administrator.
@@ -99,39 +101,48 @@ Open your web browser and navigate to `http://localhost:9002` to see the applica
 
 The codebase is organized into several key directories within the `src` folder:
 
--   `src/app`: Contains all the application's routes and pages, following the Next.js App Router convention.
--   `src/components`: Home to all reusable React components, such as UI elements (`button`, `card`), layouts, and forms.
--   `src/lib`: A collection of library functions, including database connection (`db.ts`), server actions (`actions/`), user session management (`session.ts`), and utility functions.
+-   `src/app`: Contains all the application's routes and pages, following the Next.js App Router convention. This is where the user-facing parts of the site are defined.
+-   `src/components`: Home to all reusable React components, such as UI elements (`button`, `card`), layouts (`AppLayout`), and complex interactive forms (`QuizForm`).
+-   `src/lib`: A collection of core logic, including database connection (`db.ts`), server-side operations (`actions/`), user session management (`session.ts`), and type definitions (`types.ts`).
 -   `src/ai`: Contains all the logic for the Generative AI features, powered by Genkit. Flows are defined in the `flows/` subdirectory.
 -   `data`: Holds the SQLite database file (`cyberguardian.db`) and the initial seed data (`quizzes.json`, `users.json`).
 
-### 2. Data and Database
+### 2. Data and Database Flow
 
--   **SQLite Database**: The application uses a local SQLite database (`data/cyberguardian.db`) to store all data.
--   **Initialization (`lib/db.ts`)**: When the application first starts, the `initializeDb` function checks if the database tables exist. If not, it creates them (`users`, `quizzes`, `questions`, `quiz_results`).
--   **Seeding**: After creating the tables, it checks if any data exists. If the database is empty, it populates the `users` and `quizzes` tables with the initial data found in `data/users.json` and `data/quizzes.json`. This ensures the app has content to work with on the first run.
+-   **Database File**: The application uses a local SQLite database stored in `data/cyberguardian.db`. This single file holds all user, quiz, and results data.
+-   **Initialization (`lib/db.ts`)**: When the application first starts, the `getDb` function is called. It checks if a database connection already exists. If not, it establishes one.
+-   **Schema Creation**: The `initializeDb` function is then run. It executes SQL commands to create the necessary tables (`users`, `quizzes`, `questions`, `quiz_results`) if they don't already exist.
+-   **Data Seeding**: After ensuring the tables exist, the function checks if the `users` table is empty. If it is, the app assumes this is the very first run and populates the database with initial data from `data/users.json` and `data/quizzes.json`. This ensures the application has content to work with from the start.
 
 ### 3. Authentication Flow
 
--   **Middleware (`src/middleware.ts`)**: This file intercepts incoming requests to protect routes. It ensures that unauthenticated users cannot access the dashboard or admin pages and redirects logged-in users away from the login/register pages.
--   **Session Management (`lib/session.ts`)**: User sessions are managed via an HTTP-only cookie named `session-id`. When a user logs in, their unique user ID is stored in this cookie. The `getCurrentUser` function reads this cookie to identify the logged-in user for subsequent requests.
--   **Server Actions (`lib/actions/auth.actions.ts`)**: The `loginUser`, `registerUser`, and `logout` functions handle the core authentication logic, interacting with the database and managing the session cookie.
+-   **User Interaction**: The user enters their credentials into the `AuthForm` component (`src/components/auth/AuthForm.tsx`).
+-   **Server Action**: The form submission calls a **Server Action** (`loginUser` or `registerUser` from `lib/actions/auth.actions.ts`).
+-   **Database Check**: The server action securely communicates with the database to verify credentials or create a new user.
+-   **Session Cookie**: Upon successful login, the server action uses the `cookies()` function from Next.js to set an HTTP-only cookie named `session-id`. This cookie contains the user's unique ID and is sent with every subsequent request to the server.
+-   **Middleware Protection (`src/middleware.ts`)**: The middleware intercepts all incoming requests. It checks for the presence of the `session-id` cookie. If a user tries to access a protected page (e.g., `/dashboard`) without a valid cookie, they are redirected to `/login`.
+-   **User Retrieval (`lib/session.ts`)**: On protected pages, server components call `getCurrentUser()` to read the cookie, query the database, and retrieve the full details of the logged-in user, making their data available for rendering.
 
 ### 4. Admin vs. User Roles
 
--   The **first user** who registers is automatically assigned the `isAdmin` role.
--   The UI dynamically adjusts based on the user's role. For example, the `AppLayout` component shows or hides the "Admin" section in the navigation, and the `Dashboard` page displays different cards for users and admins.
+-   **First User is Admin**: The `registerUser` action checks if the new user is the first one being created. If so, it sets the `isAdmin` boolean flag to `true` for that user in the database.
+-   **Dynamic UI**: The application's UI adapts based on the `isAdmin` property of the `user` object.
+    -   `AppLayout` shows or hides the "Admin" section in the navigation.
+    -   The `Dashboard` page displays different cards and a different welcome message for users versus admins.
+    -   The `/admin` routes are protected by checking `user.isAdmin` at the top of each page component, redirecting if the user is not an admin.
 
 ### 5. Quiz and Results Logic
 
--   **Taking a Quiz**: When a user starts a quiz, the questions are fetched from the database and shuffled (`src/app/quiz/[quizId]/page.tsx`).
--   **Client-Side State**: The `QuizClient.tsx` component manages the state of the active quiz, including the current question, selected answers, and score.
--   **Saving Results**: Upon completion, the `saveQuizResult` server action is called to record the user's score, the quiz ID, and a timestamp in the `quiz_results` table.
--   **Displaying Statistics**: The dashboard fetches all results for the logged-in user from the `quiz_results` table and uses this data to render the `OverallStats` cards, the `ResultsChart`, and the `ResultsTable`.
+-   **Taking a Quiz**: When a user navigates to `/quiz/[quizId]`, the server component fetches the quiz questions from the database and uses a `shuffle` function to randomize their order.
+-   **Client-Side State (`QuizClient.tsx`)**: The shuffled questions are passed to this client component, which manages the state of the active quiz. It keeps track of the current question index, the answers the user has selected, and the running score.
+-   **Saving Results**: When the final question is answered, the `saveQuizResult` server action is called. This action records the `userId`, `quizId`, `score`, `totalQuestions`, and a timestamp into the `quiz_results` table in the database.
+-   **Displaying Statistics**: The dashboard page (`/dashboard/page.tsx`) fetches all results for the logged-in user from the `quiz_results` table. This data is then passed as props to the `OverallStats`, `ResultsChart`, and `ResultsTable` components to render the user's performance metrics.
 
 ### 6. AI Chatbot with Genkit
 
--   **Genkit Flow (`ai/flows/cyberguardian-chatbot.ts`)**: This file defines the core logic for the AI chatbot.
-    -   `ai.definePrompt`: Configures the prompt that is sent to the Gemini model, including instructions on how to behave as a helpful cybersecurity expert.
-    -   `ai.defineFlow`: Wraps the prompt in a "flow," which is Genkit's way of defining a reusable AI-powered task.
--   **Chat Interface (`components/chatbot/ChatbotClient.tsx`)**: This client component provides the UI for the chat. It uses a server action (`chatAction`) to send the user's message to the Genkit flow and stream the AI's response back to the interface.
+-   **Genkit Flow (`ai/flows/cyberguardian-chatbot.ts`)**: This file is the "brain" of the AI.
+    -   `ai.definePrompt`: This configures the instructions sent to the Gemini model. It tells the AI its persona (a friendly cybersecurity expert) and how it should format its answers.
+    -   `ai.defineFlow`: This wraps the prompt in a "flow," which is Genkit's term for a reusable, server-side AI task.
+-   **Chat Interface (`components/chatbot/ChatbotClient.tsx`)**: This client component provides the UI. When a user sends a message, it calls the `chatAction` server action.
+-   **Server Action Bridge**: The `chatAction` (defined within the client component file for collocation) calls the exported `askCybersecurityQuestion` function from the Genkit flow file, passing the user's message.
+-   **Response Stream**: The Genkit flow communicates with the Google Gemini API, gets the response, and sends it back to the client component, which then updates the chat history on the screen.
