@@ -12,8 +12,10 @@ const GradientShield = ({ className }: { className: string }) => (
   >
     <defs>
       <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style={{ stopColor: '#8A2BE2', stopOpacity: 1 }} />
-        <stop offset="100%" style={{ stopColor: '#4682B4', stopOpacity: 1 }} />
+        <stop offset="0%" style={{ stopColor: '#8A2BE2' }} />
+        <stop offset="33%" style={{ stopColor: '#4169E1' }} />
+        <stop offset="66%" style={{ stopColor: '#20B2AA' }} />
+        <stop offset="100%" style={{ stopColor: '#3CB371' }} />
       </linearGradient>
     </defs>
     <path
@@ -38,7 +40,7 @@ export function Logo({ size = 'md' }: { size?: 'sm' | 'md' }) {
   return (
     <Link href="/dashboard" className="flex items-center gap-2 outline-none">
        <GradientShield className={sizes[size].icon} />
-      <h1 className={`${sizes[size].text} font-bold font-headline bg-clip-text text-transparent bg-gradient-to-r from-[#8A2BE2] to-[#4682B4]`}>
+      <h1 className={`${sizes[size].text} font-bold font-headline bg-clip-text text-transparent bg-gradient-to-r from-[#8A2BE2] via-[#4169E1] to-[#20B2AA]`}>
         CyberGuardian
       </h1>
     </Link>
