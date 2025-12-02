@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch, Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Quiz } from '@/lib/types';
@@ -36,6 +36,27 @@ const quizSchema = z.object({
 
 type QuizFormData = z.infer<typeof quizSchema>;
 
+// New component to isolate the `useWatch` hook and prevent full-form re-renders.
+function CorrectAnswerSelector({ control, questionIndex, register }: { control: Control<QuizFormData>, questionIndex: number, register: any }) {
+    const options = useWatch({
+      control,
+      name: `questions.${questionIndex}.options`,
+    });
+
+    return (
+        <select
+            id={`questions.${questionIndex}.correctAnswer`}
+            {...register(`questions.${questionIndex}.correctAnswer`)}
+            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+            <option value="">Select the correct answer</option>
+            {options?.map((opt, i) => (
+                opt && <option key={i} value={opt}>{opt}</option>
+            ))}
+        </select>
+    );
+}
+
 export function QuizForm({ quiz }: { quiz?: Quiz }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +65,6 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
     register,
     handleSubmit,
     control,
-    getValues,
     formState: { errors, isSubmitting },
   } = useForm<QuizFormData>({
     resolver: zodResolver(quizSchema),
@@ -98,8 +118,6 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
       </Card>
       
       {fields.map((field, questionIndex) => {
-        const watchedOptions = getValues(`questions.${questionIndex}.options`);
-
         return (
           <Card key={field.id} className="mt-6">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -142,7 +160,6 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
               </div>
               <div className="grid gap-2">
                 <Label>Options</Label>
-                {/* This part does not need to be watched, just use the field array */}
                 {fields[questionIndex].options.map((option, optionIndex) => (
                   <div key={optionIndex} className="flex items-center gap-2">
                     <Input
@@ -154,17 +171,11 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
               </div>
               <div className="grid gap-2">
                   <Label htmlFor={`questions.${questionIndex}.correctAnswer`}>Correct Answer</Label>
-                  <select
-                      id={`questions.${questionIndex}.correctAnswer`}
-                      {...register(`questions.${questionIndex}.correctAnswer`)}
-                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                      <option value="">Select the correct answer</option>
-                      {/* Use getValues to populate dropdown instead of useWatch */}
-                      {watchedOptions?.map((opt, i) => (
-                         opt && <option key={i} value={opt}>{opt}</option>
-                      ))}
-                  </select>
+                   <CorrectAnswerSelector 
+                        control={control}
+                        questionIndex={questionIndex}
+                        register={register}
+                   />
               </div>
             </CardContent>
           </Card>
