@@ -19,6 +19,7 @@ import { OverallStats } from '@/components/dashboard/OverallStats';
 import { ResultsTable } from '@/components/dashboard/ResultsTable';
 import { AdminStats } from '@/components/dashboard/AdminStats';
 import { BadgesDisplay } from '@/components/dashboard/BadgesDisplay';
+import { LearningJourney } from '@/components/dashboard/LearningJourney';
 
 async function getQuizResults(
   userId: string
@@ -237,6 +238,10 @@ export default async function DashboardPage() {
                         </Card>
                     ))}
                 </div>
+
+                 {allResults.length > 0 && (
+                  <LearningJourney results={allResults} />
+                )}
 
                 <div id="badges">
                   <BadgesDisplay badges={badges} />
