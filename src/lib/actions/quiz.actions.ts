@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -25,7 +26,7 @@ export async function createQuiz(prevState: any, formData: FormData) {
 
   if (!validatedFields.success) {
     return {
-      error: validatedFields.error.flatten().fieldErrors,
+      error: { fieldErrors: validatedFields.error.flatten().fieldErrors },
     };
   }
 
@@ -42,7 +43,6 @@ export async function createQuiz(prevState: any, formData: FormData) {
 
     for (const question of questions) {
       const questionId = crypto.randomUUID();
-      // Ensure the correct answer is one of the options
       if (!question.options.includes(question.correctAnswer)) {
           throw new Error(`Correct answer "${question.correctAnswer}" is not in the options for question "${question.text}".`);
       }
@@ -68,7 +68,7 @@ export async function createQuiz(prevState: any, formData: FormData) {
   }
 
   revalidatePath('/admin/quizzes');
-  redirect('/admin/quizzes');
+  return {};
 }
 
 export async function updateQuiz(prevState: any, formData: FormData) {
@@ -78,7 +78,7 @@ export async function updateQuiz(prevState: any, formData: FormData) {
 
   if (!validatedFields.success) {
     return {
-      error: validatedFields.error.flatten().fieldErrors,
+      error: { fieldErrors: validatedFields.error.flatten().fieldErrors },
     };
   }
   
@@ -93,16 +93,11 @@ export async function updateQuiz(prevState: any, formData: FormData) {
     db = await getDb();
     
     await db.run('BEGIN TRANSACTION');
-    // Update quiz title
     await db.run('UPDATE quizzes SET title = ? WHERE id = ?', title, quizId);
-    
-    // Delete old questions
     await db.run('DELETE FROM questions WHERE quizId = ?', quizId);
 
-    // Insert new questions
     for (const question of questions) {
         const questionId = crypto.randomUUID();
-         // Ensure the correct answer is one of the options
         if (!question.options.includes(question.correctAnswer)) {
             throw new Error(`Correct answer "${question.correctAnswer}" is not in the options for question "${question.text}".`);
         }
@@ -128,12 +123,10 @@ export async function updateQuiz(prevState: any, formData: FormData) {
 
   revalidatePath('/admin/quizzes');
   revalidatePath(`/quiz/${quizId}`);
-  redirect('/admin/quizzes');
+  return {};
 }
 
-export async function deleteQuiz(formData: FormData) {
-    const quizId = formData.get('quizId') as string;
-
+export async function deleteQuiz(quizId: string) {
     if (!quizId) {
         throw new Error('Quiz ID is required for deletion.');
     }
@@ -148,7 +141,6 @@ export async function deleteQuiz(formData: FormData) {
     }
 
     revalidatePath('/admin/quizzes');
-    redirect('/admin/quizzes');
 }
 
 
@@ -158,7 +150,6 @@ export async function saveQuizResult(quizId: string, score: number, totalQuestio
         throw new Error('User not authenticated');
     }
     
-    // Do not save results for review quizzes
     if (quizId.startsWith('review-')) {
         return;
     }
@@ -177,7 +168,6 @@ export async function saveQuizResult(quizId: string, score: number, totalQuestio
         revalidatePath('/dashboard');
     } catch (e) {
         console.error('Failed to save quiz result:', e);
-        // Handle error appropriately
     }
 }
 
