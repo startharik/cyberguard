@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   email: string;
@@ -33,6 +34,7 @@ export interface QuizResult {
     totalQuestions: number;
     completedAt: string;
     quizTitle?: string;
+    userName?: string;
 }
 
 export interface QuizFeedback {
