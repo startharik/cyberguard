@@ -22,6 +22,7 @@ export interface Quiz {
   title: string;
   questions: Question[];
   questionCount?: number;
+  bestScore?: number;
 }
 
 export interface QuizResult {
