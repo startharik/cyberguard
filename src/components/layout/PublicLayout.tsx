@@ -41,7 +41,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
       <footer className="py-6 md:px-8 md:py-0 border-t bg-muted/20">
         <div className="container mx-auto flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
             <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-                Built by CyberGuardian. The source code is available on GitHub.
+                Built by CyberGuardian.
             </p>
         </div>
       </footer>
