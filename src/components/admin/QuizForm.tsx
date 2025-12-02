@@ -62,13 +62,13 @@ function CorrectAnswerSelector({ control, questionIndex, register }: { control: 
 export function QuizForm({ quiz }: { quiz?: Quiz }) {
   const router = useRouter();
   const action = quiz ? updateQuiz : createQuiz;
-  const [state, formAction] = useActionState(action, { error: null });
+  const [state, formAction, isPending] = useActionState(action, { error: null, isInitial: true });
   
   const {
     register,
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<QuizFormData>({
     resolver: zodResolver(quizSchema),
     defaultValues: {
@@ -93,7 +93,7 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
   
   // This effect handles redirection after a successful action
   useEffect(() => {
-    if (state && !state.error) {
+    if (!state.isInitial && !state.error) {
       router.push('/admin/quizzes');
     }
   }, [state, router]);
@@ -213,9 +213,9 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
           <Button variant="outline" asChild>
             <Link href="/admin/quizzes"><ArrowLeft className="mr-2 h-4 w-4" /> Cancel</Link>
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
-             {isSubmitting && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-background mr-2"></div>}
-            {isSubmitting ? 'Saving...' : 'Save Quiz'}
+          <Button type="submit" disabled={isPending}>
+             {isPending && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-background mr-2"></div>}
+            {isPending ? 'Saving...' : 'Save Quiz'}
           </Button>
       </div>
     </form>
