@@ -34,3 +34,14 @@ export interface QuizResult {
     completedAt: string;
     quizTitle?: string;
 }
+
+export interface QuizFeedback {
+    id: string;
+    userId: string;
+    quizId: string;
+    feedback: string;
+    submittedAt: string;
+    userName?: string;
+    userEmail?: string;
+    quizTitle?: string;
+}

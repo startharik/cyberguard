@@ -6,6 +6,7 @@ import {
   ShieldCheck,
   PanelLeft,
   Users,
+  MessageSquare,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +34,7 @@ const navItems = [
 const adminNavItems = [
     { href: '/admin/quizzes', label: 'Quiz Management' },
     { href: '/admin/users', label: 'User Management' },
+    { href: '/admin/feedback', label: 'Quiz Feedback' },
 ];
 
 export function AppLayout({
@@ -62,7 +64,7 @@ export function AppLayout({
                 </Link>
               ))}
                {user.isAdmin && (
-                 <Accordion type="single" collapsible className="w-full">
+                 <Accordion type="single" collapsible className="w-full" defaultValue='item-1'>
                     <AccordionItem value="item-1" className="border-b-0">
                       <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:no-underline">
                          <div className="flex items-center gap-3">
@@ -119,7 +121,7 @@ export function AppLayout({
                 </Link>
               ))}
                {user.isAdmin && (
-                <Accordion type="single" collapsible className="w-full">
+                <Accordion type="single" collapsible className="w-full" defaultValue='item-1'>
                     <AccordionItem value="item-1" className="border-b-0">
                       <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:no-underline text-lg">
                          <div className="flex items-center gap-3">
