@@ -146,7 +146,15 @@ export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
         await saveQuizResult(quiz.id, score, questions.length, incorrectlyAnsweredIds);
 
         const incorrectIdsParam = JSON.stringify(incorrectlyAnsweredIds);
-        router.push(`/quiz/results?quizId=${quiz.id}&score=${score}&total=${questions.length}&incorrectQuestionIds=${encodeURIComponent(incorrectIdsParam)}`);
+        const queryParams = new URLSearchParams({
+            quizId: quiz.id,
+            quizTitle: quiz.title,
+            score: score.toString(),
+            total: questions.length.toString(),
+            incorrectQuestionIds: incorrectIdsParam,
+        });
+
+        router.push(`/quiz/results?${queryParams.toString()}`);
     }
   };
 

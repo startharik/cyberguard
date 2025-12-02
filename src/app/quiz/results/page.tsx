@@ -12,10 +12,36 @@ import {
   CardFooter
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Award, Trophy, ShieldAlert, BookCheck } from 'lucide-react';
+import { Award, Trophy, ShieldAlert, BookCheck, Sparkles } from 'lucide-react';
 import { FeedbackForm } from './FeedbackForm';
+import { generateQuizFeedback } from '@/ai/flows/feedback-flow';
 
-function ResultsContent({ score, total, incorrectQuestionIds, quizId }: { score: number; total: number; incorrectQuestionIds: string; quizId: string }) {
+async function AIFeedback({ score, total, quizTitle }: { score: number; total: number; quizTitle: string }) {
+  // Don't generate feedback for perfect scores on short quizzes or for review sessions.
+  if ((score === total && total < 5) || quizTitle.startsWith('Review')) {
+    return null;
+  }
+  
+  try {
+    const result = await generateQuizFeedback({
+        quizTitle,
+        score,
+        totalQuestions: total,
+    });
+
+    return (
+        <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-sm text-blue-800">
+          <p className="font-semibold flex items-center gap-2"><Sparkles className="h-4 w-4 text-blue-600" /> AI Feedback</p>
+          <p className="mt-1">{result.feedback}</p>
+        </div>
+    )
+  } catch (error) {
+    console.error("Failed to get AI feedback:", error);
+    return null;
+  }
+}
+
+function ResultsContent({ score, total, incorrectQuestionIds, quizId, quizTitle }: { score: number; total: number; incorrectQuestionIds: string; quizId: string, quizTitle: string }) {
   const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
   const incorrectIds = JSON.parse(incorrectQuestionIds || '[]');
   
@@ -59,6 +85,11 @@ function ResultsContent({ score, total, incorrectQuestionIds, quizId }: { score:
                <p className={`font-semibold ${resultColorClass}`}>{resultTitle}</p>
                <p className="text-sm text-muted-foreground mt-1">{resultDescription}</p>
            </div>
+
+            <Suspense fallback={<div className="text-sm text-muted-foreground">Generating AI feedback...</div>}>
+                <AIFeedback score={score} total={total} quizTitle={quizTitle} />
+            </Suspense>
+
            <FeedbackForm quizId={quizId} />
         </CardContent>
         <CardFooter className="flex-col gap-4">
@@ -86,9 +117,10 @@ function QuizResultsPageContents({ searchParams }: { searchParams?: { [key: stri
     const total = parseInt(searchParams?.total as string) || 0;
     const incorrectQuestionIds = (searchParams?.incorrectQuestionIds as string) || '[]';
     const quizId = (searchParams?.quizId as string) || '';
+    const quizTitle = (searchParams?.quizTitle as string) || 'this quiz';
 
 
-    return <ResultsContent score={score} total={total} incorrectQuestionIds={incorrectQuestionIds} quizId={quizId} />;
+    return <ResultsContent score={score} total={total} incorrectQuestionIds={incorrectQuestionIds} quizId={quizId} quizTitle={quizTitle} />;
 }
 
 
