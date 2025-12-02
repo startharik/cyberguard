@@ -1,3 +1,4 @@
+
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { PlusCircle, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
@@ -116,12 +117,12 @@ export default async function AdminQuizzesPage() {
                           </DropdownMenuItem>
                           <form action={deleteQuiz} className="w-full">
                             <input type="hidden" name="quizId" value={quiz.id} />
-                            <DropdownMenuItem asChild>
-                                <button type="submit" className="w-full text-left flex items-center">
+                            <button type="submit" className="w-full">
+                                <DropdownMenuItem>
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     <span>Delete</span>
-                                </button>
-                            </DropdownMenuItem>
+                                </DropdownMenuItem>
+                            </button>
                           </form>
                         </DropdownMenuContent>
                       </DropdownMenu>
