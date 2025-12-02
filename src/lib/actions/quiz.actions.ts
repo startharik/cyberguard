@@ -215,11 +215,14 @@ export async function saveQuizResult(quizId: string, score: number, totalQuestio
         throw new Error('User not authenticated');
     }
     
-    // Don't save results for the temporary review quizzes
+    // This is a temporary review quiz. Don't save a formal result, but do award a badge.
     if (quizId.startsWith('review-')) {
-        // Award badge for using review feature
-        await awardBadge(user.id, 'reviewer');
-        revalidatePath('/dashboard');
+        try {
+            await awardBadge(user.id, 'reviewer');
+            revalidatePath('/dashboard');
+        } catch (e) {
+            console.error('Failed to award reviewer badge:', e);
+        }
         return;
     }
 
