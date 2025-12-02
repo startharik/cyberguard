@@ -122,6 +122,12 @@ export default async function DashboardPage() {
       href: '/chatbot',
       icon: Bot,
     },
+    {
+      title: 'View Badges',
+      description: 'Check out your collection of achievements.',
+      href: '#badges',
+      icon: Award,
+    }
   ];
 
   // Admin-facing action cards
@@ -232,7 +238,9 @@ export default async function DashboardPage() {
                     ))}
                 </div>
 
-                <BadgesDisplay badges={badges} />
+                <div id="badges">
+                  <BadgesDisplay badges={badges} />
+                </div>
 
                 {allResults.length > 0 ? (
                     <div className="space-y-6">
