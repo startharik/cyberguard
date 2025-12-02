@@ -114,14 +114,14 @@ export default async function AdminQuizzesPage() {
                               <span>Edit</span>
                             </Link>
                           </DropdownMenuItem>
-                          <form action={deleteQuiz}>
-                              <input type="hidden" name="quizId" value={quiz.id} />
-                              <button type="submit" className="w-full">
-                                <DropdownMenuItem>
+                          <form action={deleteQuiz} className="w-full">
+                            <input type="hidden" name="quizId" value={quiz.id} />
+                            <DropdownMenuItem asChild>
+                                <button type="submit" className="w-full text-left flex items-center">
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     <span>Delete</span>
-                                </DropdownMenuItem>
-                              </button>
+                                </button>
+                            </DropdownMenuItem>
                           </form>
                         </DropdownMenuContent>
                       </DropdownMenu>
