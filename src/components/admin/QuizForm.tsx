@@ -19,9 +19,8 @@ import {
 } from '@/components/ui/card';
 import { Trash, PlusCircle, ArrowLeft, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useActionState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useActionState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const questionSchema = z.object({
@@ -61,6 +60,7 @@ function CorrectAnswerSelector({ control, questionIndex, register }: { control: 
 
 export function QuizForm({ quiz }: { quiz?: Quiz }) {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const action = quiz ? updateQuiz : createQuiz;
   const [state, formAction, isPending] = useActionState(action, { error: null, isInitial: true });
   
@@ -81,26 +81,27 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
     control,
     name: 'questions',
   });
-
-  const handleFormSubmit = (data: QuizFormData) => {
-    const formData = new FormData();
-    formData.append('payload', JSON.stringify(data));
-    if (quiz) {
-      formData.append('quizId', quiz.id);
-    }
-    formAction(formData);
-  };
   
   // This effect handles redirection after a successful action
   useEffect(() => {
-    if (!state.isInitial && !state.error) {
+    if (state && !state.isInitial && !state.error) {
       router.push('/admin/quizzes');
     }
   }, [state, router]);
 
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)}>
+    <form 
+        ref={formRef}
+        action={handleSubmit((data) => {
+            const formData = new FormData();
+            formData.append('payload', JSON.stringify(data));
+            if (quiz) {
+              formData.append('quizId', quiz.id);
+            }
+            formAction(formData);
+        })}
+    >
       <Card>
         <CardHeader>
           <CardTitle>Quiz Details</CardTitle>
