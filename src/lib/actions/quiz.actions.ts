@@ -5,7 +5,6 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/lib/db';
 import { getCurrentUser } from '../session';
-import { toast } from '@/hooks/use-toast';
 
 const questionSchema = z.object({
   text: z.string().min(1, 'Question text is required.'),
@@ -26,20 +25,27 @@ export async function createQuiz(prevState: any, formData: FormData) {
 
   if (!validatedFields.success) {
     return {
-      error: validatedFields.error.flatten(),
+      error: validatedFields.error.flatten().fieldErrors,
     };
   }
 
   const { title, questions } = validatedFields.data;
+  let db;
 
   try {
-    const db = await getDb();
+    db = await getDb();
     const quizId = crypto.randomUUID();
+
+    await db.run('BEGIN TRANSACTION');
 
     await db.run('INSERT INTO quizzes (id, title) VALUES (?, ?)', quizId, title);
 
     for (const question of questions) {
       const questionId = crypto.randomUUID();
+      // Ensure the correct answer is one of the options
+      if (!question.options.includes(question.correctAnswer)) {
+          throw new Error(`Correct answer "${question.correctAnswer}" is not in the options for question "${question.text}".`);
+      }
       await db.run(
         'INSERT INTO questions (id, quizId, text, options, correctAnswer, difficulty) VALUES (?, ?, ?, ?, ?, ?)',
         questionId,
@@ -50,9 +56,15 @@ export async function createQuiz(prevState: any, formData: FormData) {
         question.difficulty
       );
     }
+
+    await db.run('COMMIT');
   } catch (e) {
+    if (db) {
+        await db.run('ROLLBACK');
+    }
     console.error(e);
-    return { error: { formErrors: ['An unexpected error occurred. Please try again.'] } };
+    const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred. Please try again.';
+    return { error: { form: errorMessage } };
   }
 
   revalidatePath('/admin/quizzes');
@@ -66,18 +78,19 @@ export async function updateQuiz(prevState: any, formData: FormData) {
 
   if (!validatedFields.success) {
     return {
-      error: validatedFields.error.flatten(),
+      error: validatedFields.error.flatten().fieldErrors,
     };
   }
   
   if(!quizId) {
-    return { error: { formErrors: ['Quiz ID is missing.'] } };
+    return { error: { form: 'Quiz ID is missing.' } };
   }
 
   const { title, questions } = validatedFields.data;
+  let db;
   
   try {
-    const db = await getDb();
+    db = await getDb();
     
     await db.run('BEGIN TRANSACTION');
     // Update quiz title
@@ -89,6 +102,10 @@ export async function updateQuiz(prevState: any, formData: FormData) {
     // Insert new questions
     for (const question of questions) {
         const questionId = crypto.randomUUID();
+         // Ensure the correct answer is one of the options
+        if (!question.options.includes(question.correctAnswer)) {
+            throw new Error(`Correct answer "${question.correctAnswer}" is not in the options for question "${question.text}".`);
+        }
         await db.run(
             'INSERT INTO questions (id, quizId, text, options, correctAnswer, difficulty) VALUES (?, ?, ?, ?, ?, ?)',
             questionId,
@@ -101,9 +118,12 @@ export async function updateQuiz(prevState: any, formData: FormData) {
     }
     await db.run('COMMIT');
   } catch (e) {
-     await (await getDb()).run('ROLLBACK');
+     if (db) {
+        await db.run('ROLLBACK');
+     }
      console.error(e);
-     return { error: { formErrors: ['An unexpected error occurred. Please try again.'] } };
+     const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred. Please try again.';
+     return { error: { form: errorMessage } };
   }
 
   revalidatePath('/admin/quizzes');

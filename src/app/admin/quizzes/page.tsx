@@ -118,10 +118,10 @@ async function QuizzesContent() {
                             </DropdownMenuItem>
                             <form action={deleteQuiz} className="w-full">
                               <input type="hidden" name="quizId" value={quiz.id} />
-                              <button type="submit" className="w-full">
-                                  <DropdownMenuItem>
-                                      <Trash2 className="mr-2 h-4 w-4" />
-                                      <span>Delete</span>
+                              <button type="submit" className="w-full text-left">
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                      <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                                      <span className="text-destructive">Delete</span>
                                   </DropdownMenuItem>
                               </button>
                             </form>

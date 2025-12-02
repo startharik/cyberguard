@@ -26,8 +26,8 @@ async function NewQuizContent() {
 
 
 export default async function NewQuizPage() {
-    // We can get the user here to pass to the layout, as it will be available
-    // for the Suspense fallback.
+    // We get the user here to pass to the layout for the Suspense fallback.
+    // However, the actual authorization happens inside the NewQuizContent component.
     const user = await getCurrentUser();
     if (!user) {
         redirect('/login');

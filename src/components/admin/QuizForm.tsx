@@ -17,10 +17,12 @@ import {
   CardTitle,
   CardFooter
 } from '@/components/ui/card';
-import { Trash, PlusCircle, ArrowLeft } from 'lucide-react';
+import { Trash, PlusCircle, ArrowLeft, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useActionState } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const questionSchema = z.object({
   text: z.string().min(1, 'Question text is required.'),
@@ -59,12 +61,13 @@ function CorrectAnswerSelector({ control, questionIndex, register }: { control: 
 
 export function QuizForm({ quiz }: { quiz?: Quiz }) {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const action = quiz ? updateQuiz : createQuiz;
+  const [state, formAction] = useActionState(action, { error: null });
   
   const {
     register,
-    handleSubmit,
     control,
+    handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<QuizFormData>({
     resolver: zodResolver(quizSchema),
@@ -79,31 +82,22 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
     name: 'questions',
   });
 
-  const action = quiz ? updateQuiz : createQuiz;
-
-  const onSubmit = async (data: QuizFormData) => {
-    setError(null);
+  const handleFormSubmit = (data: QuizFormData) => {
     const formData = new FormData();
     formData.append('payload', JSON.stringify(data));
     if (quiz) {
       formData.append('quizId', quiz.id);
     }
-    
-    try {
-        const result = await action(null, formData);
-        if(result?.error) {
-            const errorMessages = Object.values(result.error).flat().join(', ');
-            setError(errorMessages || 'An unknown error occurred.');
-        } else {
-           router.push('/admin/quizzes');
-        }
-    } catch (e) {
-        setError('An unexpected error occurred.');
-    }
+    formAction(formData);
   };
   
+  // This effect handles redirection after a successful action
+  if (state && !state.error) {
+    router.push('/admin/quizzes');
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit(handleFormSubmit)}>
       <Card>
         <CardHeader>
           <CardTitle>Quiz Details</CardTitle>
@@ -192,11 +186,25 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
           </Button>
       </div>
       
-       {error && (
-          <div className="text-sm text-destructive mt-4">
-            {error}
-          </div>
+       {state?.error?.form && (
+          <Alert variant="destructive" className="mt-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+                {state.error.form}
+            </AlertDescription>
+          </Alert>
        )}
+       {state?.error?.fieldErrors && (
+          <Alert variant="destructive" className="mt-4">
+             <AlertCircle className="h-4 w-4" />
+             <AlertTitle>Validation Error</AlertTitle>
+             <AlertDescription>
+                Please check the form for errors.
+             </AlertDescription>
+          </Alert>
+       )}
+
 
       <div className="mt-6 flex justify-end gap-4">
           <Button variant="outline" asChild>
