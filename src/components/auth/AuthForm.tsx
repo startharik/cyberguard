@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import {
@@ -17,7 +17,9 @@ import { Label } from '@/components/ui/label';
 import { loginUser, registerUser } from '@/lib/actions/auth.actions';
 import { Logo } from '@/components/Logo';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Check, X } from 'lucide-react';
+import { Progress } from '../ui/progress';
+import { cn } from '@/lib/utils';
 
 type Mode = 'login' | 'register';
 
@@ -31,9 +33,60 @@ function SubmitButton({ mode }: { mode: Mode }) {
   );
 }
 
+function PasswordStrength({ password }: { password: any }) {
+    const checks = [
+        { regex: /.{8,}/, message: 'At least 8 characters' },
+        { regex: /[a-z]/, message: 'At least one lowercase letter' },
+        { regex: /[A-Z]/, message: 'At least one uppercase letter' },
+        { regex: /\d/, message: 'At least one number' },
+        { regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, message: 'At least one special character' },
+    ];
+
+    const satisfiedChecks = checks.filter(check => check.regex.test(password));
+    const strength = satisfiedChecks.length;
+    const strengthPercentage = (strength / checks.length) * 100;
+    
+    let strengthColor = 'bg-destructive';
+    if (strengthPercentage >= 80) {
+        strengthColor = 'bg-green-500';
+    } else if (strengthPercentage >= 40) {
+        strengthColor = 'bg-yellow-500';
+    }
+
+    if (!password) return null;
+
+    return (
+        <div className="space-y-2 pt-2">
+            <Progress value={strengthPercentage} className={cn("h-1", strengthColor)} />
+            <div className="space-y-1">
+                {checks.map((check, index) => (
+                    <div
+                        key={index}
+                        className={cn(
+                            "text-xs flex items-center gap-2",
+                            satisfiedChecks.some(c => c.message === check.message)
+                                ? "text-green-600"
+                                : "text-muted-foreground"
+                        )}
+                    >
+                        {satisfiedChecks.some(c => c.message === check.message)
+                            ? <Check className="h-3 w-3" />
+                            : <X className="h-3 w-3" />
+                        }
+                        <span>{check.message}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+
 export function AuthForm({ mode }: { mode: Mode }) {
   const action = mode === 'login' ? loginUser : registerUser;
   const [state, formAction] = useActionState(action, { error: null });
+  const [password, setPassword] = useState('');
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
@@ -80,8 +133,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required />
-              {state?.error?.password && <p className="text-xs text-destructive">{state.error.password[0]}</p>}
+              <Input 
+                id="password" 
+                name="password" 
+                type="password" 
+                required 
+                onChange={e => mode === 'register' && setPassword(e.target.value)}
+              />
+              {state?.error?.password && <p className="text-xs text-destructive">{state.error.password.join(' ')}</p>}
+              {mode === 'register' && <PasswordStrength password={password} />}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
