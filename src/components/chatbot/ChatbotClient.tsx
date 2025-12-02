@@ -6,16 +6,12 @@ import { useFormStatus } from 'react-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { askCybersecurityQuestion } from '@/ai/flows/cyberguardian-chatbot';
-import type { User } from '@/lib/types';
+import type { User, ChatMessage } from '@/lib/types';
 import { Bot, Send, User as UserIcon, MessageSquareQuote } from 'lucide-react';
-
-interface Message {
-  sender: 'user' | 'ai';
-  text: string;
-}
+import { saveChatMessage } from '@/lib/actions/chat.actions';
 
 const suggestedQuestions = [
     'What is phishing?',
@@ -24,18 +20,45 @@ const suggestedQuestions = [
     'Explain two-factor authentication.',
 ];
 
-async function chatAction(prevState: { messages: Message[] }, formData: FormData): Promise<{ messages: Message[] }> {
+async function chatAction(
+    prevState: { messages: ChatMessage[], userId: string }, 
+    formData: FormData
+): Promise<{ messages: ChatMessage[], userId: string }> {
     const question = formData.get('question') as string;
     if (!question) return prevState;
 
-    const newMessages: Message[] = [...prevState.messages, { sender: 'user', text: question }];
+    const userMessage: ChatMessage = {
+        userId: prevState.userId,
+        sender: 'user',
+        text: question,
+        createdAt: new Date().toISOString()
+    };
+
+    const newMessages: ChatMessage[] = [...prevState.messages, userMessage];
     
+    // Save user message optimisticallly
+    saveChatMessage(userMessage);
+
     try {
         const result = await askCybersecurityQuestion({ question });
-        return { messages: [...newMessages, { sender: 'ai', text: result.answer }]};
+        const aiMessage: ChatMessage = {
+            userId: prevState.userId,
+            sender: 'ai',
+            text: result.answer,
+            createdAt: new Date().toISOString()
+        };
+        // Save AI message
+        saveChatMessage(aiMessage);
+        return { ...prevState, messages: [...newMessages, aiMessage]};
     } catch (error) {
         console.error(error);
-        return { messages: [...newMessages, { sender: 'ai', text: 'Sorry, I encountered an error. Please try again.' }]};
+        const errorMessage: ChatMessage = {
+            userId: prevState.userId,
+            sender: 'ai',
+            text: 'Sorry, I encountered an error. Please try again.',
+            createdAt: new Date().toISOString()
+        };
+        return { ...prevState, messages: [...newMessages, errorMessage]};
     }
 }
 
@@ -71,8 +94,8 @@ function SuggestedQuestions({ onQuestionSelect }: { onQuestionSelect: (question:
     );
 }
 
-export function ChatbotClient({ user }: { user: User }) {
-  const [state, formAction] = useActionState(chatAction, { messages: [] });
+export function ChatbotClient({ user, initialMessages }: { user: User, initialMessages: ChatMessage[] }) {
+  const [state, formAction] = useActionState(chatAction, { messages: initialMessages, userId: user.id });
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);

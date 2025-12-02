@@ -88,6 +88,15 @@ async function initializeDb(db: Database) {
             FOREIGN KEY (badgeId) REFERENCES badges(id) ON DELETE CASCADE,
             UNIQUE(userId, badgeId)
         );
+
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id TEXT PRIMARY KEY,
+            userId TEXT NOT NULL,
+            sender TEXT NOT NULL,
+            text TEXT NOT NULL,
+            createdAt DATETIME NOT NULL,
+            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+        );
     `);
     console.log('Schema initialized.');
 

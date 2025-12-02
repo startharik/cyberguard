@@ -77,3 +77,12 @@ export interface FailedQuestionStat {
     text: string;
     failCount: number;
 }
+
+export interface ChatMessage {
+    id?: string;
+    userId: string;
+    sender: 'user' | 'ai';
+    text: string;
+    createdAt: string;
+}
+
