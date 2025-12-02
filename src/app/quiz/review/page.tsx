@@ -6,22 +6,6 @@ import type { Quiz, Question } from '@/lib/types';
 import { getDb } from '@/lib/db';
 import { Suspense } from 'react';
 
-// Function to shuffle an array
-function shuffle<T>(array: T[]): T[] {
-  let currentIndex = array.length,  randomIndex;
-
-  // While there remain elements to shuffle.
-  while (currentIndex > 0) {
-    // Pick a remaining element.
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
-    // And swap it with the current element.
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]];
-  }
-  return array;
-}
-
 async function getReviewQuiz(questionIds: string[]): Promise<Quiz | undefined> {
   if (!questionIds || questionIds.length === 0) {
     return undefined;
@@ -50,7 +34,7 @@ async function getReviewQuiz(questionIds: string[]): Promise<Quiz | undefined> {
     const reviewQuiz: Quiz = {
       id: `review-${crypto.randomUUID()}`,
       title: 'Review Missed Questions',
-      questions: shuffle(questions),
+      questions: questions,
     };
 
     return reviewQuiz;
@@ -97,7 +81,11 @@ export default async function ReviewQuizPage({ searchParams }: { searchParams?: 
   }
 
   return (
-    <Suspense fallback={<div>Loading review...</div>}>
+    <Suspense fallback={
+        <AppLayout user={user}>
+            <div>Loading review...</div>
+        </AppLayout>
+    }>
       <ReviewQuizContents searchParams={searchParams} />
     </Suspense>
   );

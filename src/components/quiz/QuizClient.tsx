@@ -39,7 +39,14 @@ const difficultyOrder: Difficulty[] = ['Easy', 'Medium', 'Hard'];
 export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
   const router = useRouter();
 
-  const questions = useMemo(() => shuffle(quiz.questions), [quiz.questions]);
+  // We only want to shuffle the questions once per quiz attempt.
+  const questions = useMemo(() => {
+    // Review quizzes can be long, so let's cap them at 10 for a practice session
+    if (quiz.id.startsWith('review-') && quiz.questions.length > 10) {
+        return shuffle(quiz.questions).slice(0, 10);
+    }
+    return shuffle(quiz.questions);
+  }, [quiz.id, quiz.questions]);
 
   // Quiz state
   const [currentDifficulty, setCurrentDifficulty] = useState<Difficulty>('Easy');
@@ -106,7 +113,10 @@ export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
       setConsecutiveIncorrect(0);
     } else {
       setAnswerStatus('incorrect');
-      setIncorrectlyAnsweredIds(prev => [...new Set([...prev, currentQuestion.id])]);
+      // For review quizzes, we don't need to track incorrect answers again.
+      if (!quiz.id.startsWith('review-')) {
+        setIncorrectlyAnsweredIds(prev => [...new Set([...prev, currentQuestion.id])]);
+      }
       setConsecutiveIncorrect(prev => prev + 1);
       setConsecutiveCorrect(0);
     }
@@ -130,11 +140,13 @@ export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
 
     if (newAnsweredQuestions.length === questions.length) {
         setIsSubmitting(true);
-        // Recalculate score at the end to be safe
-        const finalScore = questions.filter(q => !incorrectlyAnsweredIds.includes(q.id)).length;
-        await saveQuizResult(quiz.id, finalScore, questions.length, incorrectlyAnsweredIds);
+        // Recalculate score at the end to be safe, especially for review quizzes.
+        const finalScore = newAnsweredQuestions.filter(q => !incorrectlyAnsweredIds.includes(q.id)).length;
+        
+        await saveQuizResult(quiz.id, score, questions.length, incorrectlyAnsweredIds);
+
         const incorrectIdsParam = JSON.stringify(incorrectlyAnsweredIds);
-        router.push(`/quiz/results?quizId=${quiz.id}&score=${finalScore}&total=${questions.length}&incorrectQuestionIds=${encodeURIComponent(incorrectIdsParam)}`);
+        router.push(`/quiz/results?quizId=${quiz.id}&score=${score}&total=${questions.length}&incorrectQuestionIds=${encodeURIComponent(incorrectIdsParam)}`);
     }
   };
 
@@ -153,7 +165,7 @@ export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
           <CardDescription>
             Question {answeredQuestions.length + 1} of {questions.length}
           </CardDescription>
-          <Progress value={((answeredQuestions.length + 1) / questions.length) * 100} className="mt-2" />
+          <Progress value={((answeredQuestions.length) / questions.length) * 100} className="mt-2" />
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-lg font-medium">{currentQuestion.text}</p>

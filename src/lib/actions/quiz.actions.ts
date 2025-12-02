@@ -28,6 +28,7 @@ export async function createQuiz(prevState: any, formData: FormData) {
   if (!validatedFields.success) {
     return {
       error: { fieldErrors: validatedFields.error.flatten().fieldErrors },
+      isInitial: false,
     };
   }
 
@@ -36,9 +37,9 @@ export async function createQuiz(prevState: any, formData: FormData) {
 
   try {
     db = await getDb();
-    const quizId = crypto.randomUUID();
-
     await db.run('BEGIN TRANSACTION');
+
+    const quizId = crypto.randomUUID();
 
     await db.run('INSERT INTO quizzes (id, title) VALUES (?, ?)', quizId, title);
 
@@ -65,11 +66,11 @@ export async function createQuiz(prevState: any, formData: FormData) {
     }
     console.error(e);
     const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred. Please try again.';
-    return { error: { form: errorMessage } };
+    return { error: { form: errorMessage }, isInitial: false, };
   }
 
   revalidatePath('/admin/quizzes');
-  return {};
+  return { error: null, isInitial: false };
 }
 
 export async function updateQuiz(prevState: any, formData: FormData) {
@@ -80,11 +81,12 @@ export async function updateQuiz(prevState: any, formData: FormData) {
   if (!validatedFields.success) {
     return {
       error: { fieldErrors: validatedFields.error.flatten().fieldErrors },
+      isInitial: false,
     };
   }
   
   if(!quizId) {
-    return { error: { form: 'Quiz ID is missing.' } };
+    return { error: { form: 'Quiz ID is missing.' }, isInitial: false, };
   }
 
   const { title, questions } = validatedFields.data;
@@ -119,12 +121,12 @@ export async function updateQuiz(prevState: any, formData: FormData) {
      }
      console.error(e);
      const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred. Please try again.';
-     return { error: { form: errorMessage } };
+     return { error: { form: errorMessage }, isInitial: false, };
   }
 
   revalidatePath('/admin/quizzes');
   revalidatePath(`/quiz/${quizId}`);
-  return {};
+  return { error: null, isInitial: false };
 }
 
 export async function deleteQuiz(formData: FormData) {
@@ -152,6 +154,7 @@ export async function saveQuizResult(quizId: string, score: number, totalQuestio
         throw new Error('User not authenticated');
     }
     
+    // Don't save results for the temporary review quizzes
     if (quizId.startsWith('review-')) {
         return;
     }
@@ -168,6 +171,7 @@ export async function saveQuizResult(quizId: string, score: number, totalQuestio
             new Date().toISOString()
         );
         revalidatePath('/dashboard');
+        revalidatePath('/quiz');
     } catch (e) {
         console.error('Failed to save quiz result:', e);
     }
