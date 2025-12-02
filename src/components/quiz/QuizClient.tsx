@@ -39,11 +39,13 @@ const difficultyOrder: Difficulty[] = ['Easy', 'Medium', 'Hard'];
 export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
   const router = useRouter();
 
+  const questions = useMemo(() => shuffle(quiz.questions), [quiz.questions]);
+
   // Quiz state
   const [currentDifficulty, setCurrentDifficulty] = useState<Difficulty>('Easy');
   const [answeredQuestions, setAnsweredQuestions] = useState<Question[]>([]);
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
-
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1);
+  
   // Answer state
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [answerStatus, setAnswerStatus] = useState<AnswerStatus>('unanswered');
@@ -56,38 +58,41 @@ export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const availableQuestions = useMemo(() => {
-    const answeredIds = new Set(answeredQuestions.map(q => q.id));
-    return shuffle(quiz.questions.filter(q => !answeredIds.has(q.id)));
-  }, [quiz.questions, answeredQuestions]);
-
   // Select the next question based on difficulty
   useEffect(() => {
-    if (answeredQuestions.length === quiz.questions.length) return;
+    if (answeredQuestions.length === questions.length) return;
 
-    let nextQuestion: Question | undefined;
-    
+    let nextQuestionIndex = -1;
+    const answeredIds = new Set(answeredQuestions.map(q => q.id));
+
     // Try to find a question of the current difficulty
-    nextQuestion = availableQuestions.find(q => q.difficulty === currentDifficulty);
+    nextQuestionIndex = questions.findIndex(q => !answeredIds.has(q.id) && q.difficulty === currentDifficulty);
     
     // If not found, try to find one of a different difficulty
-    if (!nextQuestion) {
+    if (nextQuestionIndex === -1) {
         for (const difficulty of difficultyOrder) {
-            nextQuestion = availableQuestions.find(q => q.difficulty === difficulty);
-            if (nextQuestion) break;
+            nextQuestionIndex = questions.findIndex(q => !answeredIds.has(q.id) && q.difficulty === difficulty);
+            if (nextQuestionIndex !== -1) break;
         }
     }
 
-    setCurrentQuestion(nextQuestion || null);
+    // Fallback to any available question
+    if (nextQuestionIndex === -1) {
+        nextQuestionIndex = questions.findIndex(q => !answeredIds.has(q.id));
+    }
+
+    setCurrentQuestionIndex(nextQuestionIndex);
     setAnswerStatus('unanswered');
     setSelectedAnswer(null);
-  }, [availableQuestions, currentDifficulty, answeredQuestions.length, quiz.questions.length]);
+  }, [answeredQuestions, currentDifficulty, questions]);
 
 
   const handleOptionSelect = (option: string) => {
     if (answerStatus !== 'unanswered') return;
     setSelectedAnswer(option);
   };
+  
+  const currentQuestion = currentQuestionIndex !== -1 ? questions[currentQuestionIndex] : null;
 
   const handleSubmitAnswer = () => {
     if (!selectedAnswer || !currentQuestion) return;
@@ -101,7 +106,7 @@ export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
       setConsecutiveIncorrect(0);
     } else {
       setAnswerStatus('incorrect');
-      setIncorrectlyAnsweredIds(prev => [...prev, currentQuestion.id]);
+      setIncorrectlyAnsweredIds(prev => [...new Set([...prev, currentQuestion.id])]);
       setConsecutiveIncorrect(prev => prev + 1);
       setConsecutiveCorrect(0);
     }
@@ -120,13 +125,16 @@ export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
         setConsecutiveIncorrect(0);
     }
 
-    setAnsweredQuestions(prev => [...prev, currentQuestion]);
+    const newAnsweredQuestions = [...answeredQuestions, currentQuestion];
+    setAnsweredQuestions(newAnsweredQuestions);
 
-    if (answeredQuestions.length + 1 === quiz.questions.length) {
+    if (newAnsweredQuestions.length === questions.length) {
         setIsSubmitting(true);
-        await saveQuizResult(quiz.id, score, quiz.questions.length, incorrectlyAnsweredIds);
+        // Recalculate score at the end to be safe
+        const finalScore = questions.filter(q => !incorrectlyAnsweredIds.includes(q.id)).length;
+        await saveQuizResult(quiz.id, finalScore, questions.length, incorrectlyAnsweredIds);
         const incorrectIdsParam = JSON.stringify(incorrectlyAnsweredIds);
-        router.push(`/quiz/results?quizId=${quiz.id}&score=${score}&total=${quiz.questions.length}&incorrectQuestionIds=${encodeURIComponent(incorrectIdsParam)}`);
+        router.push(`/quiz/results?quizId=${quiz.id}&score=${finalScore}&total=${questions.length}&incorrectQuestionIds=${encodeURIComponent(incorrectIdsParam)}`);
     }
   };
 
@@ -135,7 +143,7 @@ export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
       return <div>Loading quiz...</div>;
   }
   
-  const isLastQuestion = answeredQuestions.length === quiz.questions.length - 1;
+  const isLastQuestion = answeredQuestions.length === questions.length - 1;
 
   return (
     <div className="flex items-center justify-center h-full">
@@ -143,9 +151,9 @@ export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
         <CardHeader>
           <CardTitle className="font-headline text-2xl">{quiz.title}</CardTitle>
           <CardDescription>
-            Question {answeredQuestions.length + 1} of {quiz.questions.length}
+            Question {answeredQuestions.length + 1} of {questions.length}
           </CardDescription>
-          <Progress value={((answeredQuestions.length + 1) / quiz.questions.length) * 100} className="mt-2" />
+          <Progress value={((answeredQuestions.length + 1) / questions.length) * 100} className="mt-2" />
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-lg font-medium">{currentQuestion.text}</p>

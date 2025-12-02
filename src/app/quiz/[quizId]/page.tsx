@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { QuizClient } from '@/components/quiz/QuizClient';
 import type { Quiz, Question } from '@/lib/types';
 import { getDb } from '@/lib/db';
+import { Suspense } from 'react';
 
 async function getQuizById(id: string): Promise<Quiz | undefined> {
   try {
@@ -28,25 +29,43 @@ async function getQuizById(id: string): Promise<Quiz | undefined> {
   }
 }
 
+async function QuizContent({ quizId }: { quizId: string }) {
+    const user = await getCurrentUser();
+    if (!user) {
+      // This should be caught by middleware, but as a safeguard.
+      redirect('/login');
+    }
+  
+    const quiz = await getQuizById(quizId);
+  
+    if (!quiz) {
+      return redirect('/quiz');
+    }
+  
+    return (
+      <AppLayout user={user}>
+        <QuizClient quiz={quiz} user={user} />
+      </AppLayout>
+    );
+  }
+
 export default async function TakeQuizPage({
   params,
 }: {
   params: { quizId: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect('/login');
-  }
+    const user = await getCurrentUser();
+    if (!user) {
+        redirect('/login');
+    }
 
-  const quiz = await getQuizById(params.quizId);
-
-  if (!quiz) {
-    return redirect('/quiz');
-  }
-
-  return (
-    <AppLayout user={user}>
-      <QuizClient quiz={quiz} user={user} />
-    </AppLayout>
-  );
+    return (
+        <Suspense fallback={
+            <AppLayout user={user}>
+                <div>Loading quiz...</div>
+            </AppLayout>
+        }>
+            <QuizContent quizId={params.quizId} />
+        </Suspense>
+    );
 }
