@@ -1,9 +1,11 @@
+
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/session';
 import { getDb } from '@/lib/db';
 import type { Quiz, Question } from '@/lib/types';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { QuizForm } from '@/components/admin/QuizForm';
+import { Suspense } from 'react';
 
 async function getQuizById(id: string): Promise<Quiz | undefined> {
   try {
@@ -30,30 +32,55 @@ async function getQuizById(id: string): Promise<Quiz | undefined> {
   }
 }
 
+async function EditQuizContent({ quizId }: { quizId: string }) {
+    const user = await getCurrentUser();
+    if (!user?.isAdmin) {
+      redirect('/dashboard');
+    }
+  
+    const quiz = await getQuizById(quizId);
+    if (!quiz) {
+      redirect('/admin/quizzes');
+    }
+
+    return (
+        <AppLayout user={user}>
+            <div className="space-y-1">
+                <h1 className="text-2xl font-bold font-headline">Edit Quiz</h1>
+                <p className="text-muted-foreground">
+                Update the quiz details below.
+                </p>
+            </div>
+            <QuizForm quiz={quiz} />
+        </AppLayout>
+    )
+}
+
 export default async function EditQuizPage({
   params,
 }: {
   params: { quizId: string };
 }) {
+
+  // We can get the user here to pass to the layout, as it will be available
+  // for the Suspense fallback.
   const user = await getCurrentUser();
   if (!user?.isAdmin) {
     redirect('/dashboard');
   }
-
-  const quiz = await getQuizById(params.quizId);
-  if (!quiz) {
-    redirect('/admin/quizzes');
-  }
-
+  
   return (
-    <AppLayout user={user}>
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold font-headline">Edit Quiz</h1>
-        <p className="text-muted-foreground">
-          Update the quiz details below.
-        </p>
-      </div>
-      <QuizForm quiz={quiz} />
-    </AppLayout>
+    <Suspense fallback={
+        <AppLayout user={user}>
+            <div className="space-y-1">
+                <h1 className="text-2xl font-bold font-headline">Edit Quiz</h1>
+                <p className="text-muted-foreground">
+                Loading quiz data...
+                </p>
+            </div>
+        </AppLayout>
+    }>
+      <EditQuizContent quizId={params.quizId} />
+    </Suspense>
   );
 }

@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useForm, useFieldArray, useWatch } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Quiz } from '@/lib/types';
@@ -43,6 +44,7 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
     register,
     handleSubmit,
     control,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<QuizFormData>({
     resolver: zodResolver(quizSchema),
@@ -56,8 +58,6 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
     control,
     name: 'questions',
   });
-  
-  const watchedQuestions = useWatch({ control, name: "questions" });
 
   const action = quiz ? updateQuiz : createQuiz;
 
@@ -97,73 +97,79 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
         </CardContent>
       </Card>
       
-      {fields.map((field, questionIndex) => (
-        <Card key={field.id} className="mt-6">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Question {questionIndex + 1}</CardTitle>
-              {errors.questions?.[questionIndex]?.text && <p className="text-sm text-destructive">{errors.questions[questionIndex]?.text?.message}</p>}
-              {errors.questions?.[questionIndex]?.options && <p className="text-sm text-destructive">Each option is required.</p>}
-               {errors.questions?.[questionIndex]?.correctAnswer && <p className="text-sm text-destructive">{errors.questions[questionIndex]?.correctAnswer?.message}</p>}
-            </div>
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              onClick={() => remove(questionIndex)}
-              disabled={fields.length <= 1}
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor={`questions.${questionIndex}.text`}>Question Text</Label>
-              <Input
-                id={`questions.${questionIndex}.text`}
-                {...register(`questions.${questionIndex}.text`)}
-                placeholder="e.g., Which of these emails is a phishing attempt?"
-              />
-            </div>
-             <div className="grid gap-2">
-                <Label htmlFor={`questions.${questionIndex}.difficulty`}>Difficulty</Label>
-                <select
-                    id={`questions.${questionIndex}.difficulty`}
-                    {...register(`questions.${questionIndex}.difficulty`)}
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    <option value="Easy">Easy</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Hard">Hard</option>
-                </select>
-            </div>
-            <div className="grid gap-2">
-              <Label>Options</Label>
-              {watchedQuestions?.[questionIndex]?.options.map((option, optionIndex) => (
-                <div key={optionIndex} className="flex items-center gap-2">
-                  <Input
-                    {...register(`questions.${questionIndex}.options.${optionIndex}`)}
-                    placeholder={`Option ${optionIndex + 1}`}
-                  />
-                </div>
-              ))}
-            </div>
-            <div className="grid gap-2">
-                <Label htmlFor={`questions.${questionIndex}.correctAnswer`}>Correct Answer</Label>
-                <select
-                    id={`questions.${questionIndex}.correctAnswer`}
-                    {...register(`questions.${questionIndex}.correctAnswer`)}
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    <option value="">Select the correct answer</option>
-                    {watchedQuestions?.[questionIndex]?.options.map((opt, i) => (
-                       opt && <option key={i} value={opt}>{opt}</option>
-                    ))}
-                </select>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+      {fields.map((field, questionIndex) => {
+        const watchedOptions = getValues(`questions.${questionIndex}.options`);
+
+        return (
+          <Card key={field.id} className="mt-6">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Question {questionIndex + 1}</CardTitle>
+                {errors.questions?.[questionIndex]?.text && <p className="text-sm text-destructive">{errors.questions[questionIndex]?.text?.message}</p>}
+                {errors.questions?.[questionIndex]?.options && <p className="text-sm text-destructive">Each option is required.</p>}
+                {errors.questions?.[questionIndex]?.correctAnswer && <p className="text-sm text-destructive">{errors.questions[questionIndex]?.correctAnswer?.message}</p>}
+              </div>
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                onClick={() => remove(questionIndex)}
+                disabled={fields.length <= 1}
+              >
+                <Trash className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor={`questions.${questionIndex}.text`}>Question Text</Label>
+                <Input
+                  id={`questions.${questionIndex}.text`}
+                  {...register(`questions.${questionIndex}.text`)}
+                  placeholder="e.g., Which of these emails is a phishing attempt?"
+                />
+              </div>
+              <div className="grid gap-2">
+                  <Label htmlFor={`questions.${questionIndex}.difficulty`}>Difficulty</Label>
+                  <select
+                      id={`questions.${questionIndex}.difficulty`}
+                      {...register(`questions.${questionIndex}.difficulty`)}
+                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                      <option value="Easy">Easy</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Hard">Hard</option>
+                  </select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Options</Label>
+                {/* This part does not need to be watched, just use the field array */}
+                {fields[questionIndex].options.map((option, optionIndex) => (
+                  <div key={optionIndex} className="flex items-center gap-2">
+                    <Input
+                      {...register(`questions.${questionIndex}.options.${optionIndex}`)}
+                      placeholder={`Option ${optionIndex + 1}`}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="grid gap-2">
+                  <Label htmlFor={`questions.${questionIndex}.correctAnswer`}>Correct Answer</Label>
+                  <select
+                      id={`questions.${questionIndex}.correctAnswer`}
+                      {...register(`questions.${questionIndex}.correctAnswer`)}
+                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                      <option value="">Select the correct answer</option>
+                      {/* Use getValues to populate dropdown instead of useWatch */}
+                      {watchedOptions?.map((opt, i) => (
+                         opt && <option key={i} value={opt}>{opt}</option>
+                      ))}
+                  </select>
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })}
 
       <div className="mt-6">
           <Button
