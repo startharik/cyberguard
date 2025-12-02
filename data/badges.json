@@ -5,5 +5,65 @@
         "name": "Phishing Master",
         "description": "Awarded for mastering the art of identifying phishing attempts.",
         "iconName": "Fish"
+    },
+    {
+        "id": "quiz-initiate",
+        "name": "Quiz Initiate",
+        "description": "Awarded for completing your first quiz.",
+        "iconName": "Feather"
+    },
+    {
+        "id": "perfect-score",
+        "name": "Perfectionist",
+        "description": "Awarded for achieving a perfect 100% score on any quiz.",
+        "iconName": "Target"
+    },
+    {
+        "id": "streak-3",
+        "name": "On a Roll",
+        "description": "Awarded for passing 3 quizzes in a row.",
+        "iconName": "Flame"
+    },
+    {
+        "id": "streak-5",
+        "name": "Hot Streak",
+        "description": "Awarded for passing 5 quizzes in a row.",
+        "iconName": "Flame"
+    },
+    {
+        "id": "password-fortress",
+        "name": "Password Fortress",
+        "description": "Awarded for mastering quizzes on password security.",
+        "iconName": "KeyRound"
+    },
+    {
+        "id": "social-engineer-savvy",
+        "name": "Social Savvy",
+        "description": "Awarded for excelling in social engineering awareness quizzes.",
+        "iconName": "Users"
+    },
+    {
+        "id": "network-ninja",
+        "name": "Network Ninja",
+        "description": "Awarded for acing quizzes about network security.",
+        "iconName": "Wifi"
+    },
+    {
+        "id": "malware-mangler",
+        "name": "Malware Mangler",
+        "description": "Awarded for expertise in identifying and understanding malware.",
+        "iconName": "Bug"
+    },
+    {
+        "id": "reviewer",
+        "name": "Diligent Reviewer",
+        "description": "Awarded for using the 'Review Missed Questions' feature for the first time.",
+        "iconName": "BookCheck"
+    },
+    {
+        "id": "speed-demon",
+        "name": "Speed Demon",
+        "description": "Awarded for completing a quiz in under 2 minutes.",
+        "iconName": "Zap"
     }
 ]

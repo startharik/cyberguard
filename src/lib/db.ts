@@ -21,7 +21,8 @@ async function initializeDb(db: Database) {
             name TEXT NOT NULL,
             email TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
-            isAdmin BOOLEAN NOT NULL DEFAULT 0
+            isAdmin BOOLEAN NOT NULL DEFAULT 0,
+            streak INTEGER NOT NULL DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS quizzes (
@@ -97,12 +98,13 @@ async function initializeDb(db: Database) {
         const users: User[] = JSON.parse(usersData);
         for (const user of users) {
             await db.run(
-                'INSERT INTO users (id, name, email, password, isAdmin) VALUES (?, ?, ?, ?, ?)',
+                'INSERT INTO users (id, name, email, password, isAdmin, streak) VALUES (?, ?, ?, ?, ?, ?)',
                 user.id,
                 user.name,
                 user.email,
                 user.password,
-                user.isAdmin ? 1 : 0
+                user.isAdmin ? 1 : 0,
+                0
             );
         }
         console.log('Users seeded.');

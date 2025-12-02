@@ -6,6 +6,7 @@ export interface User {
   password?: string;
   name: string;
   isAdmin?: boolean;
+  streak?: number;
 }
 
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';

@@ -1,6 +1,7 @@
 
 
 
+
 'use server';
 
 import { z } from 'zod';
@@ -149,17 +150,25 @@ export async function deleteQuiz(formData: FormData) {
     revalidatePath('/admin/quizzes');
 }
 
-async function checkAndAwardBadges(userId: string) {
+// ============== BADGE AWARDING LOGIC ==============
+
+async function awardBadge(userId: string, badgeId: string) {
     const db = await getDb();
-    
-    // Check for "Phishing Master" badge
-    const phishingBadgeId = 'phishing-master';
-    const hasBadge = await db.get('SELECT 1 FROM user_badges WHERE userId = ? AND badgeId = ?', userId, phishingBadgeId);
+    const hasBadge = await db.get('SELECT 1 FROM user_badges WHERE userId = ? AND badgeId = ?', userId, badgeId);
+    if (hasBadge) return; // Already has the badge
 
-    if (hasBadge) {
-        return; // Already has the badge
-    }
+    await db.run(
+        'INSERT INTO user_badges (id, userId, badgeId, earnedAt) VALUES (?, ?, ?, ?)',
+        crypto.randomUUID(),
+        userId,
+        badgeId,
+        new Date().toISOString()
+    );
+    console.log(`Awarded badge ${badgeId} to user ${userId}`);
+}
 
+async function checkPhishingMasterBadge(userId: string) {
+    const db = await getDb();
     const phishingQuizzes = await db.all("SELECT id FROM quizzes WHERE title LIKE '%Phishing%'");
     if (phishingQuizzes.length === 0) return;
 
@@ -178,15 +187,28 @@ async function checkAndAwardBadges(userId: string) {
     });
 
     if (hasMasteredAll) {
-        await db.run(
-            'INSERT INTO user_badges (id, userId, badgeId, earnedAt) VALUES (?, ?, ?, ?)',
-            crypto.randomUUID(),
-            userId,
-            phishingBadgeId,
-            new Date().toISOString()
-        );
-        revalidatePath('/dashboard');
+        await awardBadge(userId, 'phishing-master');
     }
+}
+
+async function checkQuizStreakBadges(userId: string) {
+    const db = await getDb();
+    const user = await db.get('SELECT streak FROM users WHERE id = ?', userId);
+    if (!user) return;
+  
+    const streak = user.streak;
+  
+    if (streak >= 3) {
+      await awardBadge(userId, 'streak-3');
+    }
+}
+
+
+async function checkAndAwardBadges(userId: string) {
+    await checkPhishingMasterBadge(userId);
+    await checkQuizStreakBadges(userId);
+    // Add calls to other badge checks here
+    revalidatePath('/dashboard');
 }
 
 
@@ -212,6 +234,15 @@ export async function saveQuizResult(quizId: string, score: number, totalQuestio
             totalQuestions,
             new Date().toISOString()
         );
+
+        // Update user's streak
+        const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
+        if (percentage >= 75) {
+            await db.run('UPDATE users SET streak = streak + 1 WHERE id = ?', user.id);
+        } else {
+            await db.run('UPDATE users SET streak = 0 WHERE id = ?', user.id);
+        }
+
 
         // After saving the result, check if the user earned any badges
         await checkAndAwardBadges(user.id);
