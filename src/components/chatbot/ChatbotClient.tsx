@@ -3,15 +3,24 @@
 
 import { useState, useRef, useEffect, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { askCybersecurityQuestion } from '@/ai/flows/cyberguardian-chatbot';
 import type { User, ChatMessage } from '@/lib/types';
-import { Bot, Send, User as UserIcon, MessageSquareQuote } from 'lucide-react';
+import { Bot, Send, MessageSquareQuote, Settings } from 'lucide-react';
 import { saveChatMessage } from '@/lib/actions/chat.actions';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+
+type Personality = 'Friendly' | 'Formal' | 'Technical';
 
 const suggestedQuestions = [
     'What is phishing?',
@@ -21,11 +30,13 @@ const suggestedQuestions = [
 ];
 
 async function chatAction(
-    prevState: { messages: ChatMessage[], userId: string }, 
+    prevState: { messages: ChatMessage[], userId: string, personality: Personality }, 
     formData: FormData
-): Promise<{ messages: ChatMessage[], userId: string }> {
+): Promise<{ messages: ChatMessage[], userId: string, personality: Personality }> {
     const question = formData.get('question') as string;
-    if (!question) return prevState;
+    const personality = formData.get('personality') as Personality;
+
+    if (!question) return { ...prevState, personality };
 
     const userMessage: ChatMessage = {
         userId: prevState.userId,
@@ -40,7 +51,7 @@ async function chatAction(
     saveChatMessage(userMessage);
 
     try {
-        const result = await askCybersecurityQuestion({ question });
+        const result = await askCybersecurityQuestion({ question, personality });
         const aiMessage: ChatMessage = {
             userId: prevState.userId,
             sender: 'ai',
@@ -49,7 +60,7 @@ async function chatAction(
         };
         // Save AI message
         saveChatMessage(aiMessage);
-        return { ...prevState, messages: [...newMessages, aiMessage]};
+        return { ...prevState, messages: [...newMessages, aiMessage], personality };
     } catch (error) {
         console.error(error);
         const errorMessage: ChatMessage = {
@@ -58,7 +69,7 @@ async function chatAction(
             text: 'Sorry, I encountered an error. Please try again.',
             createdAt: new Date().toISOString()
         };
-        return { ...prevState, messages: [...newMessages, errorMessage]};
+        return { ...prevState, messages: [...newMessages, errorMessage], personality };
     }
 }
 
@@ -95,7 +106,9 @@ function SuggestedQuestions({ onQuestionSelect }: { onQuestionSelect: (question:
 }
 
 export function ChatbotClient({ user, initialMessages }: { user: User, initialMessages: ChatMessage[] }) {
-  const [state, formAction] = useActionState(chatAction, { messages: initialMessages, userId: user.id });
+  const [personality, setPersonality] = useState<Personality>('Friendly');
+  const [state, formAction] = useActionState(chatAction, { messages: initialMessages, userId: user.id, personality });
+
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -125,11 +138,46 @@ export function ChatbotClient({ user, initialMessages }: { user: User, initialMe
 
   return (
     <Card className="w-full h-full flex flex-col">
-      <CardHeader>
-        <CardTitle className="font-headline flex items-center gap-2">
-            <Bot />
-            AI Cybersecurity Assistant
-        </CardTitle>
+      <CardHeader className="flex-row items-center justify-between">
+        <div>
+            <CardTitle className="font-headline flex items-center gap-2">
+                <Bot />
+                AI Cybersecurity Assistant
+            </CardTitle>
+            <CardDescription>Current personality: {personality}</CardDescription>
+        </div>
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button variant="outline" size="icon">
+                    <Settings className="h-4 w-4" />
+                    <span className="sr-only">Settings</span>
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-60">
+                 <div className="grid gap-4">
+                    <div className="space-y-2">
+                        <h4 className="font-medium leading-none">Personality</h4>
+                        <p className="text-sm text-muted-foreground">
+                            Set the tone of the AI assistant.
+                        </p>
+                    </div>
+                    <RadioGroup value={personality} onValueChange={(v: Personality) => setPersonality(v)}>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Friendly" id="p-friendly" />
+                            <Label htmlFor="p-friendly">Friendly</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Formal" id="p-formal" />
+                            <Label htmlFor="p-formal">Formal</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Technical" id="p-technical" />
+                            <Label htmlFor="p-technical">Technical</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
+            </PopoverContent>
+        </Popover>
       </CardHeader>
       <CardContent className="flex-grow overflow-hidden">
         <ScrollArea className="h-full pr-4" ref={scrollAreaRef}>
@@ -166,6 +214,7 @@ export function ChatbotClient({ user, initialMessages }: { user: User, initialMe
         <form
           ref={formRef}
           action={async (formData) => {
+            formData.append('personality', personality);
             await formAction(formData);
             formRef.current?.reset();
           }}
