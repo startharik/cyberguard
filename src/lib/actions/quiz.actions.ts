@@ -225,15 +225,27 @@ export async function saveQuizResult(quizId: string, score: number, totalQuestio
 
     try {
         const db = await getDb();
+        const resultId = crypto.randomUUID();
+
         await db.run(
             'INSERT INTO quiz_results (id, userId, quizId, score, totalQuestions, completedAt) VALUES (?, ?, ?, ?, ?, ?)',
-            crypto.randomUUID(),
+            resultId,
             user.id,
             quizId,
             score,
             totalQuestions,
             new Date().toISOString()
         );
+
+        // Log incorrect answers
+        for (const questionId of incorrectQuestionIds) {
+            await db.run(
+                'INSERT INTO incorrect_answers (id, resultId, questionId) VALUES (?, ?, ?)',
+                crypto.randomUUID(),
+                resultId,
+                questionId
+            );
+        }
 
         // Update user's streak
         const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;

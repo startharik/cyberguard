@@ -67,3 +67,13 @@ export interface UserBadge {
   badgeId: string;
   earnedAt: string;
 }
+
+export interface AttemptedQuizStat {
+    title: string;
+    attempts: number;
+}
+  
+export interface FailedQuestionStat {
+    text: string;
+    failCount: number;
+}

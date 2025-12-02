@@ -54,6 +54,14 @@ async function initializeDb(db: Database) {
             FOREIGN KEY (quizId) REFERENCES quizzes(id) ON DELETE CASCADE
         );
 
+        CREATE TABLE IF NOT EXISTS incorrect_answers (
+            id TEXT PRIMARY KEY,
+            resultId TEXT NOT NULL,
+            questionId TEXT NOT NULL,
+            FOREIGN KEY (resultId) REFERENCES quiz_results(id) ON DELETE CASCADE,
+            FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE
+        );
+
         CREATE TABLE IF NOT EXISTS quiz_feedback (
             id TEXT PRIMARY KEY,
             userId TEXT NOT NULL,

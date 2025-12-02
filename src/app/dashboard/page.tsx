@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Bot, FileText, ArrowRight, ShieldCheck, Users, MessageSquare, BarChart3, Award } from 'lucide-react';
-import type { QuizResult, Badge } from '@/lib/types';
+import type { QuizResult, Badge, AttemptedQuizStat, FailedQuestionStat } from '@/lib/types';
 import { getDb } from '@/lib/db';
 import { ResultsChart } from '@/components/dashboard/ResultsChart';
 import { OverallStats } from '@/components/dashboard/OverallStats';
@@ -20,6 +20,9 @@ import { ResultsTable } from '@/components/dashboard/ResultsTable';
 import { AdminStats } from '@/components/dashboard/AdminStats';
 import { BadgesDisplay } from '@/components/dashboard/BadgesDisplay';
 import { LearningJourney } from '@/components/dashboard/LearningJourney';
+import { MostAttemptedQuizzes } from '@/components/dashboard/analytics/MostAttemptedQuizzes';
+import { MostFailedQuestions } from '@/components/dashboard/analytics/MostFailedQuestions';
+
 
 async function getQuizResults(
   userId: string
@@ -53,6 +56,8 @@ async function getAdminDashboardData() {
       resultCount,
       feedbackCount,
       recentResults,
+      mostAttempted,
+      mostFailed,
     ] = await Promise.all([
       db.get('SELECT COUNT(*) as count FROM users'),
       db.get('SELECT COUNT(*) as count FROM quizzes'),
@@ -66,6 +71,22 @@ async function getAdminDashboardData() {
         ORDER BY qr.completedAt DESC
         LIMIT 5
       `),
+      db.all<AttemptedQuizStat>(`
+        SELECT q.title, COUNT(qr.id) as attempts
+        FROM quiz_results qr
+        JOIN quizzes q ON qr.quizId = q.id
+        GROUP BY qr.quizId
+        ORDER BY attempts DESC
+        LIMIT 5
+      `),
+      db.all<FailedQuestionStat>(`
+        SELECT q.text, COUNT(ia.id) as failCount
+        FROM incorrect_answers ia
+        JOIN questions q ON ia.questionId = q.id
+        GROUP BY ia.questionId
+        ORDER BY failCount DESC
+        LIMIT 5
+      `),
     ]);
 
     return {
@@ -76,12 +97,16 @@ async function getAdminDashboardData() {
         feedback: feedbackCount.count,
       },
       recentResults,
+      mostAttempted,
+      mostFailed,
     };
   } catch (error) {
     console.error('Could not load admin dashboard data:', error);
     return {
       stats: { users: 0, quizzes: 0, results: 0, feedback: 0 },
       recentResults: [],
+      mostAttempted: [],
+      mostFailed: [],
     };
   }
 }
@@ -201,6 +226,12 @@ export default async function DashboardPage() {
                         </Card>
                     ))}
                 </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  <MostAttemptedQuizzes data={adminData.mostAttempted} />
+                  <MostFailedQuestions data={adminData.mostFailed} />
+                </div>
+
                 <Card>
                     <CardHeader>
                         <CardTitle className="font-headline flex items-center gap-2"><BarChart3/> Recent Quiz Activity</CardTitle>
