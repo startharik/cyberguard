@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect, useActionState } from 'react';
@@ -9,12 +10,19 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { askCybersecurityQuestion } from '@/ai/flows/cyberguardian-chatbot';
 import type { User } from '@/lib/types';
-import { Bot, Send, User as UserIcon } from 'lucide-react';
+import { Bot, Send, User as UserIcon, MessageSquareQuestion } from 'lucide-react';
 
 interface Message {
   sender: 'user' | 'ai';
   text: string;
 }
+
+const suggestedQuestions = [
+    'What is phishing?',
+    'How do I create a strong password?',
+    'What is malware?',
+    'Explain two-factor authentication.',
+];
 
 async function chatAction(prevState: { messages: Message[] }, formData: FormData): Promise<{ messages: Message[] }> {
     const question = formData.get('question') as string;
@@ -41,9 +49,32 @@ function ChatSubmitButton() {
   );
 }
 
+function SuggestedQuestions({ onQuestionSelect }: { onQuestionSelect: (question: string) => void }) {
+    return (
+        <div className="text-center text-muted-foreground pt-8">
+             <Bot className="mx-auto h-12 w-12 mb-4" />
+             <p className="mb-6 font-medium">Ask me anything about cybersecurity! Or try one of these:</p>
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                 {suggestedQuestions.map((q, i) => (
+                     <Button 
+                        key={i} 
+                        variant="outline" 
+                        className="h-auto justify-start text-left whitespace-normal"
+                        onClick={() => onQuestionSelect(q)}
+                     >
+                        <MessageSquareQuestion className="mr-2 h-4 w-4 shrink-0" />
+                        {q}
+                     </Button>
+                 ))}
+             </div>
+        </div>
+    );
+}
+
 export function ChatbotClient({ user }: { user: User }) {
   const [state, formAction] = useActionState(chatAction, { messages: [] });
   const formRef = useRef<HTMLFormElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -62,6 +93,13 @@ export function ChatbotClient({ user }: { user: User }) {
       .join('');
   };
 
+  const handleSuggestedQuestion = (question: string) => {
+    if (inputRef.current) {
+        inputRef.current.value = question;
+        formRef.current?.requestSubmit();
+    }
+  }
+
   return (
     <Card className="w-full h-full flex flex-col">
       <CardHeader>
@@ -74,10 +112,7 @@ export function ChatbotClient({ user }: { user: User }) {
         <ScrollArea className="h-full pr-4" ref={scrollAreaRef}>
           <div className="space-y-4">
             {state.messages.length === 0 && (
-                <div className="text-center text-muted-foreground pt-16">
-                    <Bot className="mx-auto h-12 w-12 mb-4" />
-                    <p>Ask me anything about cybersecurity!</p>
-                </div>
+                <SuggestedQuestions onQuestionSelect={handleSuggestedQuestion} />
             )}
             {state.messages.map((message, index) => (
               <div key={index} className={`flex items-start gap-3 ${message.sender === 'user' ? 'justify-end' : ''}`}>
@@ -113,7 +148,14 @@ export function ChatbotClient({ user }: { user: User }) {
           }}
           className="flex w-full items-center space-x-2"
         >
-          <Input id="question" name="question" placeholder="Type your question..." className="flex-1" autoComplete="off" />
+          <Input 
+            ref={inputRef}
+            id="question" 
+            name="question" 
+            placeholder="Type your question..." 
+            className="flex-1" 
+            autoComplete="off" 
+          />
           <ChatSubmitButton />
         </form>
       </CardFooter>
