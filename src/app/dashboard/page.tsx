@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Bot, FileText, ArrowRight, ShieldCheck, Users, MessageSquare, BarChart3, Award } from 'lucide-react';
+import { Bot, FileText, ArrowRight, ShieldCheck, Users, MessageSquare, BarChart3, Award, Inbox } from 'lucide-react';
 import type { QuizResult, Badge, AttemptedQuizStat, FailedQuestionStat } from '@/lib/types';
 import { getDb } from '@/lib/db';
 import { ResultsChart } from '@/components/dashboard/ResultsChart';
@@ -55,6 +55,7 @@ async function getAdminDashboardData() {
       quizCount,
       resultCount,
       feedbackCount,
+      contactCount,
       recentResults,
       mostAttempted,
       mostFailed,
@@ -63,6 +64,7 @@ async function getAdminDashboardData() {
       db.get('SELECT COUNT(*) as count FROM quizzes'),
       db.get('SELECT COUNT(*) as count FROM quiz_results'),
       db.get('SELECT COUNT(*) as count FROM quiz_feedback'),
+      db.get('SELECT COUNT(*) as count FROM contact_messages'),
       db.all<QuizResult[]>(`
         SELECT qr.*, q.title as quizTitle, u.name as userName
         FROM quiz_results qr
@@ -95,6 +97,7 @@ async function getAdminDashboardData() {
         quizzes: quizCount.count,
         results: resultCount.count,
         feedback: feedbackCount.count,
+        contacts: contactCount.count,
       },
       recentResults,
       mostAttempted,
@@ -103,7 +106,7 @@ async function getAdminDashboardData() {
   } catch (error) {
     console.error('Could not load admin dashboard data:', error);
     return {
-      stats: { users: 0, quizzes: 0, results: 0, feedback: 0 },
+      stats: { users: 0, quizzes: 0, results: 0, feedback: 0, contacts: 0 },
       recentResults: [],
       mostAttempted: [],
       mostFailed: [],
@@ -171,10 +174,16 @@ export default async function DashboardPage() {
       icon: Users,
     },
     {
-      title: 'View Feedback',
-      description: 'See what users are saying about the quizzes.',
-      href: '/admin/feedback',
-      icon: MessageSquare,
+        title: 'View Feedback',
+        description: 'See what users are saying about the quizzes.',
+        href: '/admin/feedback',
+        icon: MessageSquare,
+    },
+    {
+        title: 'Contact Messages',
+        description: 'Read and reply to messages from your users.',
+        href: '/admin/contact-messages',
+        icon: Inbox,
     },
   ];
 
@@ -204,7 +213,7 @@ export default async function DashboardPage() {
             // ADMIN DASHBOARD VIEW
             <div className="space-y-6">
                 <AdminStats stats={adminData.stats} />
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
                     {adminFeatures.map(feature => (
                         <Card key={feature.title}>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

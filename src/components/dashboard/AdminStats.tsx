@@ -1,5 +1,5 @@
 
-import { Users, FileText, BarChart3, MessageSquare } from 'lucide-react';
+import { Users, FileText, BarChart3, MessageSquare, Inbox } from 'lucide-react';
 import {
     Card,
     CardContent,
@@ -13,6 +13,7 @@ interface AdminStatsProps {
         quizzes: number;
         results: number;
         feedback: number;
+        contacts: number;
     };
 }
 
@@ -29,12 +30,12 @@ export function AdminStats({ stats }: AdminStatsProps) {
             icon: FileText,
         },
         {
-            title: 'Total Quizzes Taken',
+            title: 'Quizzes Taken',
             value: stats.results,
             icon: BarChart3,
         },
         {
-            title: 'Total Feedback',
+            title: 'Quiz Feedback',
             value: stats.feedback,
             icon: MessageSquare,
         },

@@ -97,6 +97,14 @@ async function initializeDb(db: Database) {
             createdAt DATETIME NOT NULL,
             FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS contact_messages (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            message TEXT NOT NULL,
+            submittedAt DATETIME NOT NULL
+        );
     `);
     console.log('Schema initialized.');
 
