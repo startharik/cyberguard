@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { askCybersecurityQuestion } from '@/ai/flows/cyberguardian-chatbot';
 import type { User } from '@/lib/types';
-import { Bot, Send, User as UserIcon, MessageSquareQuestion } from 'lucide-react';
+import { Bot, Send, User as UserIcon, MessageSquareQuote } from 'lucide-react';
 
 interface Message {
   sender: 'user' | 'ai';
@@ -62,7 +62,7 @@ function SuggestedQuestions({ onQuestionSelect }: { onQuestionSelect: (question:
                         className="h-auto justify-start text-left whitespace-normal"
                         onClick={() => onQuestionSelect(q)}
                      >
-                        <MessageSquareQuestion className="mr-2 h-4 w-4 shrink-0" />
+                        <MessageSquareQuote className="mr-2 h-4 w-4 shrink-0" />
                         {q}
                      </Button>
                  ))}
