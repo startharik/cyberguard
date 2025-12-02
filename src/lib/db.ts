@@ -32,6 +32,7 @@ async function initializeDb(db: Database) {
             text TEXT NOT NULL,
             options TEXT NOT NULL,
             correctAnswer TEXT NOT NULL,
+            difficulty TEXT NOT NULL DEFAULT 'Easy',
             FOREIGN KEY (quizId) REFERENCES quizzes(id) ON DELETE CASCADE
         );
         
@@ -94,12 +95,13 @@ async function initializeDb(db: Database) {
             await db.run('INSERT INTO quizzes (id, title) VALUES (?, ?)', quiz.id, quiz.title);
             for (const question of quiz.questions) {
                 await db.run(
-                    'INSERT INTO questions (id, quizId, text, options, correctAnswer) VALUES (?, ?, ?, ?, ?)',
+                    'INSERT INTO questions (id, quizId, text, options, correctAnswer, difficulty) VALUES (?, ?, ?, ?, ?, ?)',
                     question.id,
                     quiz.id,
                     question.text,
                     JSON.stringify(question.options),
-                    question.correctAnswer
+                    question.correctAnswer,
+                    question.difficulty || 'Easy' // Default to Easy if not provided
                 );
             }
         }

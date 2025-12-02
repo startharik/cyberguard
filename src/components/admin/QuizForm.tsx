@@ -25,6 +25,7 @@ const questionSchema = z.object({
   text: z.string().min(1, 'Question text is required.'),
   options: z.array(z.string().min(1, 'Option text is required.')).min(2, 'At least two options are required.'),
   correctAnswer: z.string().min(1, 'Correct answer is required.'),
+  difficulty: z.enum(['Easy', 'Medium', 'Hard']),
 });
 
 const quizSchema = z.object({
@@ -47,7 +48,7 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
     resolver: zodResolver(quizSchema),
     defaultValues: {
       title: quiz?.title || '',
-      questions: quiz?.questions || [{ text: '', options: ['', ''], correctAnswer: '' }],
+      questions: quiz?.questions || [{ text: '', options: ['', ''], correctAnswer: '', difficulty: 'Easy' }],
     },
   });
 
@@ -124,9 +125,21 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
                 placeholder="e.g., Which of these emails is a phishing attempt?"
               />
             </div>
+             <div className="grid gap-2">
+                <Label htmlFor={`questions.${questionIndex}.difficulty`}>Difficulty</Label>
+                <select
+                    id={`questions.${questionIndex}.difficulty`}
+                    {...register(`questions.${questionIndex}.difficulty`)}
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                </select>
+            </div>
             <div className="grid gap-2">
               <Label>Options</Label>
-              {watchedQuestions[questionIndex]?.options.map((option, optionIndex) => (
+              {watchedQuestions?.[questionIndex]?.options.map((option, optionIndex) => (
                 <div key={optionIndex} className="flex items-center gap-2">
                   <Input
                     {...register(`questions.${questionIndex}.options.${optionIndex}`)}
@@ -143,7 +156,7 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
                     className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     <option value="">Select the correct answer</option>
-                    {watchedQuestions[questionIndex]?.options.map((opt, i) => (
+                    {watchedQuestions?.[questionIndex]?.options.map((opt, i) => (
                        opt && <option key={i} value={opt}>{opt}</option>
                     ))}
                 </select>
@@ -156,7 +169,7 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => append({ text: '', options: ['', ''], correctAnswer: '' })}
+            onClick={() => append({ text: '', options: ['', ''], correctAnswer: '', difficulty: 'Easy' })}
           >
             <PlusCircle className="mr-2 h-4 w-4" /> Add Question
           </Button>

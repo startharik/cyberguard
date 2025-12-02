@@ -11,6 +11,7 @@ const questionSchema = z.object({
   text: z.string().min(1, 'Question text is required.'),
   options: z.array(z.string().min(1, 'Option text is required.')).min(2, 'At least two options are required.'),
   correctAnswer: z.string().min(1, 'Correct answer is required.'),
+  difficulty: z.enum(['Easy', 'Medium', 'Hard']),
 });
 
 const quizSchema = z.object({
@@ -40,12 +41,13 @@ export async function createQuiz(prevState: any, formData: FormData) {
     for (const question of questions) {
       const questionId = crypto.randomUUID();
       await db.run(
-        'INSERT INTO questions (id, quizId, text, options, correctAnswer) VALUES (?, ?, ?, ?, ?)',
+        'INSERT INTO questions (id, quizId, text, options, correctAnswer, difficulty) VALUES (?, ?, ?, ?, ?, ?)',
         questionId,
         quizId,
         question.text,
         JSON.stringify(question.options),
-        question.correctAnswer
+        question.correctAnswer,
+        question.difficulty
       );
     }
   } catch (e) {
@@ -88,12 +90,13 @@ export async function updateQuiz(prevState: any, formData: FormData) {
     for (const question of questions) {
         const questionId = crypto.randomUUID();
         await db.run(
-            'INSERT INTO questions (id, quizId, text, options, correctAnswer) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO questions (id, quizId, text, options, correctAnswer, difficulty) VALUES (?, ?, ?, ?, ?, ?)',
             questionId,
             quizId,
             question.text,
             JSON.stringify(question.options),
-            question.correctAnswer
+            question.correctAnswer,
+            question.difficulty
         );
     }
     await db.run('COMMIT');
@@ -129,10 +132,15 @@ export async function deleteQuiz(formData: FormData) {
 }
 
 
-export async function saveQuizResult(quizId: string, score: number, totalQuestions: number) {
+export async function saveQuizResult(quizId: string, score: number, totalQuestions: number, incorrectQuestionIds: string[]) {
     const user = await getCurrentUser();
     if (!user) {
         throw new Error('User not authenticated');
+    }
+    
+    // Do not save results for review quizzes
+    if (quizId.startsWith('review-')) {
+        return;
     }
 
     try {

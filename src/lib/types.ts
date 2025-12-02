@@ -6,12 +6,15 @@ export interface User {
   isAdmin?: boolean;
 }
 
+export type Difficulty = 'Easy' | 'Medium' | 'Hard';
+
 export interface Question {
   id: string;
   quizId?: string;
   text: string;
   options: string[];
   correctAnswer: string;
+  difficulty: Difficulty;
 }
 
 export interface Quiz {

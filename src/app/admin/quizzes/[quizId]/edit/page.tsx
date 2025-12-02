@@ -14,7 +14,7 @@ async function getQuizById(id: string): Promise<Quiz | undefined> {
     }
 
     const questionsData = await db.all<Question[]>(
-      'SELECT * FROM questions WHERE quizId = ?',
+      'SELECT * FROM questions WHERE quizId = ? ORDER BY id',
       id
     );
 

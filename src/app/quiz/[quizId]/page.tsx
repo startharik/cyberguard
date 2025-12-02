@@ -5,26 +5,6 @@ import { QuizClient } from '@/components/quiz/QuizClient';
 import type { Quiz, Question } from '@/lib/types';
 import { getDb } from '@/lib/db';
 
-// Function to shuffle an array
-function shuffle<T>(array: T[]): T[] {
-  let currentIndex = array.length,  randomIndex;
-
-  // While there remain elements to shuffle.
-  while (currentIndex > 0) {
-
-    // Pick a remaining element.
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
-
-    // And swap it with the current element.
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]];
-  }
-
-  return array;
-}
-
-
 async function getQuizById(id: string): Promise<Quiz | undefined> {
   try {
     const db = await getDb();
@@ -41,7 +21,7 @@ async function getQuizById(id: string): Promise<Quiz | undefined> {
         options: JSON.parse(q.options as unknown as string),
     }));
 
-    return { ...quizData, questions: shuffle(questions) };
+    return { ...quizData, questions: questions };
   } catch (error) {
     console.error('Could not read quiz from database:', error);
     return undefined;
