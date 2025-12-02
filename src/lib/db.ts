@@ -3,13 +3,15 @@ import sqlite3 from 'sqlite3';
 import { open, type Database } from 'sqlite';
 import path from 'path';
 import fs from 'fs/promises';
-import type { Quiz, User } from './types';
+import type { Quiz, User, Badge } from './types';
 
 // Singleton instance of the database
 let db: Database | null = null;
 
 const quizzesJsonPath = path.join(process.cwd(), 'data/quizzes.json');
 const usersJsonPath = path.join(process.cwd(), 'data/users.json');
+const badgesJsonPath = path.join(process.cwd(), 'data/badges.json');
+
 
 async function initializeDb(db: Database) {
     console.log('Initializing database schema...');
@@ -59,6 +61,23 @@ async function initializeDb(db: Database) {
             submittedAt DATETIME NOT NULL,
             FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (quizId) REFERENCES quizzes(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS badges (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT NOT NULL,
+            iconName TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS user_badges (
+            id TEXT PRIMARY KEY,
+            userId TEXT NOT NULL,
+            badgeId TEXT NOT NULL,
+            earnedAt DATETIME NOT NULL,
+            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (badgeId) REFERENCES badges(id) ON DELETE CASCADE,
+            UNIQUE(userId, badgeId)
         );
     `);
     console.log('Schema initialized.');
@@ -118,6 +137,24 @@ async function initializeDb(db: Database) {
         console.log('Quizzes seeded.');
     } catch (error) {
         console.error('Could not read or seed quizzes.json:', error);
+    }
+
+     // Seed badges
+     try {
+        const badgesData = await fs.readFile(badgesJsonPath, 'utf-8');
+        const badges: Badge[] = JSON.parse(badgesData);
+        for (const badge of badges) {
+            await db.run(
+                'INSERT INTO badges (id, name, description, iconName) VALUES (?, ?, ?, ?)',
+                badge.id,
+                badge.name,
+                badge.description,
+                badge.iconName
+            );
+        }
+        console.log('Badges seeded.');
+    } catch (error) {
+        console.error('Could not read or seed badges.json:', error);
     }
 
 }

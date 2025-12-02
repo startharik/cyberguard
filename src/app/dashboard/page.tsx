@@ -11,13 +11,14 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Bot, FileText, ArrowRight, ShieldCheck, Users, MessageSquare, BarChart3 } from 'lucide-react';
-import type { QuizResult } from '@/lib/types';
+import { Bot, FileText, ArrowRight, ShieldCheck, Users, MessageSquare, BarChart3, Award } from 'lucide-react';
+import type { QuizResult, Badge } from '@/lib/types';
 import { getDb } from '@/lib/db';
 import { ResultsChart } from '@/components/dashboard/ResultsChart';
 import { OverallStats } from '@/components/dashboard/OverallStats';
 import { ResultsTable } from '@/components/dashboard/ResultsTable';
 import { AdminStats } from '@/components/dashboard/AdminStats';
+import { BadgesDisplay } from '@/components/dashboard/BadgesDisplay';
 
 async function getQuizResults(
   userId: string
@@ -84,6 +85,22 @@ async function getAdminDashboardData() {
   }
 }
 
+async function getUserBadges(userId: string): Promise<Badge[]> {
+  try {
+    const db = await getDb();
+    const badges = await db.all<Badge[]>(`
+      SELECT b.*, ub.earnedAt FROM badges b
+      JOIN user_badges ub ON b.id = ub.badgeId
+      WHERE ub.userId = ?
+      ORDER BY ub.earnedAt DESC
+    `, userId);
+    return badges;
+  } catch (error) {
+    console.error('Could not load user badges:', error);
+    return [];
+  }
+}
+
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -134,6 +151,8 @@ export default async function DashboardPage() {
     : await getQuizResults(user.id);
     
   const adminData = user.isAdmin ? await getAdminDashboardData() : null;
+
+  const badges = user.isAdmin ? [] : await getUserBadges(user.id);
 
   return (
     <AppLayout user={user}>
@@ -212,6 +231,8 @@ export default async function DashboardPage() {
                         </Card>
                     ))}
                 </div>
+
+                <BadgesDisplay badges={badges} />
 
                 {allResults.length > 0 ? (
                     <div className="space-y-6">

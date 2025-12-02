@@ -52,3 +52,17 @@ export interface QuizFeedback {
     userEmail?: string;
     quizTitle?: string;
 }
+
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  iconName: string;
+  earnedAt?: string;
+}
+
+export interface UserBadge {
+  userId: string;
+  badgeId: string;
+  earnedAt: string;
+}

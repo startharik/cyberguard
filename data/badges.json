@@ -1,0 +1,9 @@
+
+[
+    {
+        "id": "phishing-master",
+        "name": "Phishing Master",
+        "description": "Awarded for mastering the art of identifying phishing attempts.",
+        "iconName": "Fish"
+    }
+]

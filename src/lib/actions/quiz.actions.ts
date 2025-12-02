@@ -1,5 +1,6 @@
 
 
+
 'use server';
 
 import { z } from 'zod';
@@ -7,6 +8,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/lib/db';
 import { getCurrentUser } from '../session';
+import type { QuizResult, Badge } from '../types';
 
 const questionSchema = z.object({
   text: z.string().min(1, 'Question text is required.'),
@@ -147,6 +149,46 @@ export async function deleteQuiz(formData: FormData) {
     revalidatePath('/admin/quizzes');
 }
 
+async function checkAndAwardBadges(userId: string) {
+    const db = await getDb();
+    
+    // Check for "Phishing Master" badge
+    const phishingBadgeId = 'phishing-master';
+    const hasBadge = await db.get('SELECT 1 FROM user_badges WHERE userId = ? AND badgeId = ?', userId, phishingBadgeId);
+
+    if (hasBadge) {
+        return; // Already has the badge
+    }
+
+    const phishingQuizzes = await db.all("SELECT id FROM quizzes WHERE title LIKE '%Phishing%'");
+    if (phishingQuizzes.length === 0) return;
+
+    const phishingQuizIds = phishingQuizzes.map(q => q.id);
+    
+    const userBestScores = await db.all<{ quizId: string, bestScore: number }>(`
+        SELECT quizId, MAX(score * 100.0 / totalQuestions) as bestScore 
+        FROM quiz_results 
+        WHERE userId = ? AND quizId IN (${phishingQuizIds.map(() => '?').join(',')})
+        GROUP BY quizId
+    `, userId, ...phishingQuizIds);
+
+    const hasMasteredAll = phishingQuizzes.every(quiz => {
+        const result = userBestScores.find(score => score.quizId === quiz.id);
+        return result && result.bestScore >= 80;
+    });
+
+    if (hasMasteredAll) {
+        await db.run(
+            'INSERT INTO user_badges (id, userId, badgeId, earnedAt) VALUES (?, ?, ?, ?)',
+            crypto.randomUUID(),
+            userId,
+            phishingBadgeId,
+            new Date().toISOString()
+        );
+        revalidatePath('/dashboard');
+    }
+}
+
 
 export async function saveQuizResult(quizId: string, score: number, totalQuestions: number, incorrectQuestionIds: string[]) {
     const user = await getCurrentUser();
@@ -170,6 +212,10 @@ export async function saveQuizResult(quizId: string, score: number, totalQuestio
             totalQuestions,
             new Date().toISOString()
         );
+
+        // After saving the result, check if the user earned any badges
+        await checkAndAwardBadges(user.id);
+        
         revalidatePath('/dashboard');
         revalidatePath('/quiz');
     } catch (e) {
