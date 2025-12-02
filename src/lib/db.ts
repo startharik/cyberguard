@@ -1,3 +1,4 @@
+
 import sqlite3 from 'sqlite3';
 import { open, type Database } from 'sqlite';
 import path from 'path';
@@ -23,7 +24,10 @@ async function initializeDb(db: Database) {
 
         CREATE TABLE IF NOT EXISTS quizzes (
             id TEXT PRIMARY KEY,
-            title TEXT NOT NULL
+            title TEXT NOT NULL,
+            prerequisiteQuizId TEXT,
+            prerequisiteScore INTEGER,
+            FOREIGN KEY (prerequisiteQuizId) REFERENCES quizzes(id) ON DELETE SET NULL
         );
 
         CREATE TABLE IF NOT EXISTS questions (
@@ -92,7 +96,13 @@ async function initializeDb(db: Database) {
         const quizzesData = await fs.readFile(quizzesJsonPath, 'utf-8');
         const quizzes: Quiz[] = JSON.parse(quizzesData);
         for (const quiz of quizzes) {
-            await db.run('INSERT INTO quizzes (id, title) VALUES (?, ?)', quiz.id, quiz.title);
+            await db.run(
+              'INSERT INTO quizzes (id, title, prerequisiteQuizId, prerequisiteScore) VALUES (?, ?, ?, ?)',
+              quiz.id,
+              quiz.title,
+              quiz.prerequisiteQuizId,
+              quiz.prerequisiteScore
+            );
             for (const question of quiz.questions) {
                 await db.run(
                     'INSERT INTO questions (id, quizId, text, options, correctAnswer, difficulty) VALUES (?, ?, ?, ?, ?, ?)',

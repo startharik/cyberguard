@@ -1,4 +1,5 @@
 
+
 export interface User {
   id: string;
   email: string;
@@ -24,6 +25,10 @@ export interface Quiz {
   questions: Question[];
   questionCount?: number;
   bestScore?: number;
+  prerequisiteQuizId?: string;
+  prerequisiteScore?: number;
+  isLocked?: boolean;
+  prerequisiteQuizTitle?: string;
 }
 
 export interface QuizResult {

@@ -50,5 +50,46 @@
         "correctAnswer": "Phishing"
       }
     ]
+  },
+  {
+    "id": "2",
+    "title": "Advanced Phishing Tactics",
+    "prerequisiteQuizId": "1",
+    "prerequisiteScore": 80,
+    "questions": [
+      {
+        "id": "adv_q1",
+        "text": "What is 'Spear Phishing'?",
+        "options": [
+          "A general phishing email sent to a large number of people.",
+          "A targeted phishing attack aimed at a specific individual or organization.",
+          "A type of fishing that uses a spear gun.",
+          "An email that contains a virus."
+        ],
+        "correctAnswer": "A targeted phishing attack aimed at a specific individual or organization."
+      },
+      {
+        "id": "adv_q2",
+        "text": "An email appears to come from your CEO asking for an urgent wire transfer to a new vendor. This is an example of what kind of attack?",
+        "options": [
+          "Malware",
+          "Denial of Service",
+          "Business Email Compromise (BEC)",
+          "Smishing"
+        ],
+        "correctAnswer": "Business Email Compromise (BEC)"
+      },
+      {
+        "id": "adv_q3",
+        "text": "What does 'Smishing' refer to?",
+        "options": [
+          "Phishing attacks conducted over email.",
+          "Phishing attacks that use social media.",
+          "Phishing attacks conducted via SMS (text messages).",
+          "A secure way of messaging."
+        ],
+        "correctAnswer": "Phishing attacks conducted via SMS (text messages)."
+      }
+    ]
   }
 ]
