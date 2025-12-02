@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/card';
 import { Trash, PlusCircle, ArrowLeft, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useActionState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -92,9 +92,12 @@ export function QuizForm({ quiz }: { quiz?: Quiz }) {
   };
   
   // This effect handles redirection after a successful action
-  if (state && !state.error) {
-    router.push('/admin/quizzes');
-  }
+  useEffect(() => {
+    if (state && !state.error) {
+      router.push('/admin/quizzes');
+    }
+  }, [state, router]);
+
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)}>
