@@ -1,6 +1,7 @@
+
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { MoreHorizontal, Pencil, Trash2, User as UserIcon } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, BarChart2 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/session';
 import { getDb } from '@/lib/db';
 import type { User } from '@/lib/types';
@@ -116,6 +117,12 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                           <DropdownMenuItem asChild>
+                            <Link href={`/admin/users/${u.id}/progress`}>
+                              <BarChart2 className="mr-2 h-4 w-4" />
+                              <span>View Progress</span>
+                            </Link>
+                          </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link href={`/admin/users/${u.id}/edit`}>
                               <Pencil className="mr-2 h-4 w-4" />
