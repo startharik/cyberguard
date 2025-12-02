@@ -46,10 +46,11 @@ export function DeleteQuizButton({ quizId }: { quizId: string }) {
         </DropdownMenuItem>
       </AlertDialogTrigger>
       <AlertDialogContent>
-        <form action={() => {
-            deleteQuiz(quizId);
+        <form action={async (formData) => {
+            await deleteQuiz(formData);
             setOpen(false);
         }}>
+          <input type="hidden" name="quizId" value={quizId} />
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>

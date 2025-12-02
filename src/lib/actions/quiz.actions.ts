@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { z } from 'zod';
@@ -126,7 +127,8 @@ export async function updateQuiz(prevState: any, formData: FormData) {
   return {};
 }
 
-export async function deleteQuiz(quizId: string) {
+export async function deleteQuiz(formData: FormData) {
+    const quizId = formData.get('quizId') as string;
     if (!quizId) {
         throw new Error('Quiz ID is required for deletion.');
     }
