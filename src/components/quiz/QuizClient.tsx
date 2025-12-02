@@ -25,6 +25,7 @@ export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [answerStatus, setAnswerStatus] = useState<Record<string, AnswerStatus>>({});
+  const [incorrectlyAnswered, setIncorrectlyAnswered] = useState<string[]>([]);
   const [score, setScore] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -46,6 +47,7 @@ export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
       setAnswerStatus(prev => ({...prev, [currentQuestion.id]: 'correct'}));
     } else {
       setAnswerStatus(prev => ({...prev, [currentQuestion.id]: 'incorrect'}));
+      setIncorrectlyAnswered(prev => [...prev, currentQuestion.id]);
     }
   };
 
@@ -53,7 +55,8 @@ export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
     if (isLastQuestion) {
         setIsSubmitting(true);
         await saveQuizResult(quiz.id, score, quiz.questions.length);
-        router.push(`/quiz/results?score=${score}&total=${quiz.questions.length}`);
+        const incorrectQuestionIds = JSON.stringify(incorrectlyAnswered);
+        router.push(`/quiz/results?quizId=${quiz.id}&score=${score}&total=${quiz.questions.length}&incorrectQuestionIds=${encodeURIComponent(incorrectQuestionIds)}`);
     } else {
       setCurrentQuestionIndex(prev => prev + 1);
     }

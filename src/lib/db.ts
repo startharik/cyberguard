@@ -45,6 +45,16 @@ async function initializeDb(db: Database) {
             FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (quizId) REFERENCES quizzes(id) ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS quiz_feedback (
+            id TEXT PRIMARY KEY,
+            userId TEXT NOT NULL,
+            quizId TEXT NOT NULL,
+            feedback TEXT NOT NULL,
+            submittedAt DATETIME NOT NULL,
+            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (quizId) REFERENCES quizzes(id) ON DELETE CASCADE
+        );
     `);
     console.log('Schema initialized.');
 

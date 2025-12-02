@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/lib/db';
 import { getCurrentUser } from '../session';
+import { toast } from '@/hooks/use-toast';
 
 const questionSchema = z.object({
   text: z.string().min(1, 'Question text is required.'),
@@ -149,5 +150,39 @@ export async function saveQuizResult(quizId: string, score: number, totalQuestio
     } catch (e) {
         console.error('Failed to save quiz result:', e);
         // Handle error appropriately
+    }
+}
+
+export async function submitFeedback(prevState: any, formData: FormData) {
+    const user = await getCurrentUser();
+    if (!user) {
+        return { error: 'You must be logged in to submit feedback.' };
+    }
+
+    const feedback = formData.get('feedback') as string;
+    const quizId = formData.get('quizId') as string;
+
+    if (!feedback || feedback.trim().length === 0) {
+        return { error: 'Feedback cannot be empty.' };
+    }
+
+    if (!quizId) {
+        return { error: 'Quiz ID is missing.' };
+    }
+
+    try {
+        const db = await getDb();
+        await db.run(
+            'INSERT INTO quiz_feedback (id, userId, quizId, feedback, submittedAt) VALUES (?, ?, ?, ?, ?)',
+            crypto.randomUUID(),
+            user.id,
+            quizId,
+            feedback,
+            new Date().toISOString()
+        );
+        return { success: 'Thank you for your feedback!' };
+    } catch (e) {
+        console.error('Failed to save feedback:', e);
+        return { error: 'An unexpected error occurred. Please try again.' };
     }
 }

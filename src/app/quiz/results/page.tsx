@@ -12,10 +12,12 @@ import {
   CardFooter
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Award, Trophy, ShieldAlert } from 'lucide-react';
+import { Award, Trophy, ShieldAlert, BookCheck } from 'lucide-react';
+import { FeedbackForm } from './FeedbackForm';
 
-function ResultsContent({ score, total }: { score: number; total: number }) {
+function ResultsContent({ score, total, incorrectQuestionIds, quizId }: { score: number; total: number; incorrectQuestionIds: string; quizId: string }) {
   const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
+  const incorrectIds = JSON.parse(incorrectQuestionIds || '[]');
   
   let resultIcon, resultTitle, resultDescription, resultColorClass, resultBgClass;
 
@@ -57,12 +59,20 @@ function ResultsContent({ score, total }: { score: number; total: number }) {
                <p className={`font-semibold ${resultColorClass}`}>{resultTitle}</p>
                <p className="text-sm text-muted-foreground mt-1">{resultDescription}</p>
            </div>
+           <FeedbackForm quizId={quizId} />
         </CardContent>
         <CardFooter className="flex-col gap-4">
-            <Button asChild>
+            {incorrectIds.length > 0 && (
+                <Button asChild variant="secondary" className="w-full">
+                    <Link href={`/quiz/review?questionIds=${JSON.stringify(incorrectIds)}`}>
+                        <BookCheck className="mr-2 h-4 w-4" /> Practice Missed Questions ({incorrectIds.length})
+                    </Link>
+                </Button>
+            )}
+            <Button asChild className="w-full">
                 <Link href="/quiz">Take Another Quiz</Link>
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="w-full">
                 <Link href="/dashboard">Back to Dashboard</Link>
             </Button>
         </CardFooter>
@@ -74,8 +84,11 @@ function ResultsContent({ score, total }: { score: number; total: number }) {
 function QuizResultsPageContents({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined }}) {
     const score = parseInt(searchParams?.score as string) || 0;
     const total = parseInt(searchParams?.total as string) || 0;
+    const incorrectQuestionIds = (searchParams?.incorrectQuestionIds as string) || '[]';
+    const quizId = (searchParams?.quizId as string) || '';
 
-    return <ResultsContent score={score} total={total} />;
+
+    return <ResultsContent score={score} total={total} incorrectQuestionIds={incorrectQuestionIds} quizId={quizId} />;
 }
 
 
