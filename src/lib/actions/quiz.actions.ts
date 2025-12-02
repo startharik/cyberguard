@@ -1,7 +1,4 @@
 
-
-
-
 'use server';
 
 import { z } from 'zod';
@@ -220,6 +217,9 @@ export async function saveQuizResult(quizId: string, score: number, totalQuestio
     
     // Don't save results for the temporary review quizzes
     if (quizId.startsWith('review-')) {
+        // Award badge for using review feature
+        await awardBadge(user.id, 'reviewer');
+        revalidatePath('/dashboard');
         return;
     }
 
@@ -241,6 +241,14 @@ export async function saveQuizResult(quizId: string, score: number, totalQuestio
             await db.run('UPDATE users SET streak = streak + 1 WHERE id = ?', user.id);
         } else {
             await db.run('UPDATE users SET streak = 0 WHERE id = ?', user.id);
+        }
+
+        // Award first quiz badge
+        await awardBadge(user.id, 'quiz-initiate');
+        
+        // Award perfect score badge
+        if (percentage === 100) {
+            await awardBadge(user.id, 'perfect-score');
         }
 
 

@@ -1,0 +1,103 @@
+
+[
+  {
+    "id": "1",
+    "title": "Phishing Challenge",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "You receive an email from 'Netflix Support' (support@netflix-billing.com) stating there's a problem with your payment. It asks you to click a link to update your billing information. The link goes to 'http://netflix.account-update.com'. Is this a phishing attempt?",
+        "options": [
+          "Phishing",
+          "Legitimate"
+        ],
+        "correctAnswer": "Phishing",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "q2",
+        "text": "You get a text message: 'Your package from Amazon has a shipping issue. Please confirm your details here to reschedule delivery: bit.ly/Amz-Track1'. Is this message safe to click?",
+        "options": [
+          "Phishing",
+          "Legitimate"
+        ],
+        "correctAnswer": "Phishing",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "q3",
+        "text": "An email arrives from 'Your Bank' (security@your-bank.com) with the subject 'Security Alert: Unusual Login Attempt'. It states there was a login from a new device and asks you to review the activity by logging in through a provided link. The link is 'https://your-bank.com/login-activity'. The email looks professional. Is it phishing?",
+        "options": [
+          "Phishing",
+          "Legitimate"
+        ],
+        "correctAnswer": "Legitimate",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "q4",
+        "text": "A direct message on social media from a friend says, 'OMG! Is this you in this video?' with a link to a site you don't recognize. What should you do?",
+        "options": [
+          "Assume it's phishing and ask your friend about it separately.",
+          "Click the link to see if it's really you."
+        ],
+        "correctAnswer": "Assume it's phishing and ask your friend about it separately.",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "q5",
+        "text": "You receive an email with a PDF attachment named 'Invoice.pdf' from a company you don't do business with. The email body is empty. Is it safe to open the attachment?",
+        "options": [
+          "Phishing",
+          "Legitimate"
+        ],
+        "correctAnswer": "Phishing",
+        "difficulty": "Hard"
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "title": "Advanced Phishing Tactics",
+    "prerequisiteQuizId": "1",
+    "prerequisiteScore": 80,
+    "questions": [
+      {
+        "id": "adv_q1",
+        "text": "What is 'Spear Phishing'?",
+        "options": [
+          "A general phishing email sent to a large number of people.",
+          "A targeted phishing attack aimed at a specific individual or organization.",
+          "A type of fishing that uses a spear gun.",
+          "An email that contains a virus."
+        ],
+        "correctAnswer": "A targeted phishing attack aimed at a specific individual or organization.",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "adv_q2",
+        "text": "An email appears to come from your CEO asking for an urgent wire transfer to a new vendor. This is an example of what kind of attack?",
+        "options": [
+          "Malware",
+          "Denial of Service",
+          "Business Email Compromise (BEC)",
+          "Smishing"
+        ],
+        "correctAnswer": "Business Email Compromise (BEC)",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "adv_q3",
+        "text": "What does 'Smishing' refer to?",
+        "options": [
+          "Phishing attacks conducted over email.",
+          "Phishing attacks that use social media.",
+          "Phishing attacks conducted via SMS (text messages).",
+          "A secure way of messaging."
+        ],
+        "correctAnswer": "Phishing attacks conducted via SMS (text messages).",
+        "difficulty": "Medium"
+      }
+    ]
+  }
+]
