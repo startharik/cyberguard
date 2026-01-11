@@ -1,5 +1,7 @@
 
 
+export type SkillLevel = 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+
 export interface User {
   id: string;
   email: string;
@@ -7,9 +9,10 @@ export interface User {
   name: string;
   isAdmin?: boolean;
   streak?: number;
+  skillLevel?: SkillLevel;
 }
 
-export type Difficulty = 'Easy' | 'Medium' | 'Hard';
+export type Difficulty = 'Easy' | 'Medium' | 'Hard' | 'Very Hard';
 
 export interface Question {
   id: string;
@@ -23,6 +26,7 @@ export interface Question {
 export interface Quiz {
   id:string;
   title: string;
+  topic: string;
   questions: Question[];
   questionCount?: number;
   bestScore?: number;
@@ -36,6 +40,7 @@ export interface QuizResult {
     id: string;
     userId: string;
     quizId: string;
+    topic: string;
     score: number;
     totalQuestions: number;
     completedAt: string;

@@ -8,7 +8,6 @@ import type { Quiz, User, Badge } from './types';
 // Singleton instance of the database
 let db: Database | null = null;
 
-const quizzesJsonPath = path.join(process.cwd(), 'data/quizzes.json');
 const usersJsonPath = path.join(process.cwd(), 'data/users.json');
 const badgesJsonPath = path.join(process.cwd(), 'data/badges.json');
 
@@ -22,15 +21,14 @@ async function initializeDb(db: Database) {
             email TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
             isAdmin BOOLEAN NOT NULL DEFAULT 0,
-            streak INTEGER NOT NULL DEFAULT 0
+            streak INTEGER NOT NULL DEFAULT 0,
+            skillLevel TEXT NOT NULL DEFAULT 'Beginner'
         );
 
         CREATE TABLE IF NOT EXISTS quizzes (
             id TEXT PRIMARY KEY,
             title TEXT NOT NULL,
-            prerequisiteQuizId TEXT,
-            prerequisiteScore INTEGER,
-            FOREIGN KEY (prerequisiteQuizId) REFERENCES quizzes(id) ON DELETE SET NULL
+            topic TEXT NOT NULL
         );
 
         CREATE TABLE IF NOT EXISTS questions (
@@ -47,6 +45,7 @@ async function initializeDb(db: Database) {
             id TEXT PRIMARY KEY,
             userId TEXT NOT NULL,
             quizId TEXT NOT NULL,
+            topic TEXT NOT NULL,
             score INTEGER NOT NULL,
             totalQuestions INTEGER NOT NULL,
             completedAt DATETIME NOT NULL,
@@ -123,13 +122,14 @@ async function initializeDb(db: Database) {
         const users: User[] = JSON.parse(usersData);
         for (const user of users) {
             await db.run(
-                'INSERT INTO users (id, name, email, password, isAdmin, streak) VALUES (?, ?, ?, ?, ?, ?)',
+                'INSERT INTO users (id, name, email, password, isAdmin, streak, skillLevel) VALUES (?, ?, ?, ?, ?, ?, ?)',
                 user.id,
                 user.name,
                 user.email,
                 user.password,
                 user.isAdmin ? 1 : 0,
-                0
+                0,
+                'Beginner'
             );
         }
         console.log('Users seeded.');
@@ -137,35 +137,6 @@ async function initializeDb(db: Database) {
         console.error('Could not read or seed users.json:', error);
     }
     
-    // Seed quizzes
-    try {
-        const quizzesData = await fs.readFile(quizzesJsonPath, 'utf-8');
-        const quizzes: Quiz[] = JSON.parse(quizzesData);
-        for (const quiz of quizzes) {
-            await db.run(
-              'INSERT INTO quizzes (id, title, prerequisiteQuizId, prerequisiteScore) VALUES (?, ?, ?, ?)',
-              quiz.id,
-              quiz.title,
-              quiz.prerequisiteQuizId,
-              quiz.prerequisiteScore
-            );
-            for (const question of quiz.questions) {
-                await db.run(
-                    'INSERT INTO questions (id, quizId, text, options, correctAnswer, difficulty) VALUES (?, ?, ?, ?, ?, ?)',
-                    question.id,
-                    quiz.id,
-                    question.text,
-                    JSON.stringify(question.options),
-                    question.correctAnswer,
-                    question.difficulty || 'Easy' // Default to Easy if not provided
-                );
-            }
-        }
-        console.log('Quizzes seeded.');
-    } catch (error) {
-        console.error('Could not read or seed quizzes.json:', error);
-    }
-
      // Seed badges
      try {
         const badgesData = await fs.readFile(badgesJsonPath, 'utf-8');

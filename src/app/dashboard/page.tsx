@@ -140,8 +140,8 @@ export default async function DashboardPage() {
   // User-facing features
   const features = [
     {
-      title: 'Start Quiz',
-      description: 'Test your cybersecurity knowledge.',
+      title: 'Generate Quiz',
+      description: 'Create a personalized quiz with AI.',
       href: '/quiz',
       icon: FileText,
     },
@@ -161,12 +161,6 @@ export default async function DashboardPage() {
 
   // Admin-facing action cards
   const adminFeatures = [
-    {
-      title: 'Manage Quizzes',
-      description: 'Create, edit, and delete quizzes and questions.',
-      href: '/admin/quizzes',
-      icon: FileText,
-    },
     {
       title: 'Manage Users',
       description: 'View, edit, and manage all user accounts.',
@@ -213,7 +207,7 @@ export default async function DashboardPage() {
             // ADMIN DASHBOARD VIEW
             <div className="space-y-6">
                 <AdminStats stats={adminData.stats} />
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {adminFeatures.map(feature => (
                         <Card key={feature.title}>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -329,7 +323,7 @@ export default async function DashboardPage() {
                             <div className="text-center py-10 text-muted-foreground">
                                 <p>You haven't completed any quizzes yet.</p>
                                 <Button variant="link" asChild className="mt-2">
-                                <Link href="/quiz">Start your first quiz</Link>
+                                <Link href="/quiz">Generate your first quiz</Link>
                                 </Button>
                             </div>
                         </CardContent>

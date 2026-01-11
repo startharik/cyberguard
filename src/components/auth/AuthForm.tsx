@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useActionState, useState } from 'react';
@@ -20,6 +21,13 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Check, X } from 'lucide-react';
 import { Progress } from '../ui/progress';
 import { cn } from '@/lib/utils';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  } from "@/components/ui/select"
 
 type Mode = 'login' | 'register';
 
@@ -114,11 +122,28 @@ export function AuthForm({ mode }: { mode: Mode }) {
               </Alert>
             )}
             {mode === 'register' && (
-              <div className="grid gap-2">
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" name="name" placeholder="John Doe" required />
-                 {state?.error?.name && <p className="text-xs text-destructive">{state.error.name[0]}</p>}
-              </div>
+              <>
+                <div className="grid gap-2">
+                    <Label htmlFor="name">Name</Label>
+                    <Input id="name" name="name" placeholder="John Doe" required />
+                    {state?.error?.name && <p className="text-xs text-destructive">{state.error.name[0]}</p>}
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="skillLevel">Cybersecurity Skill Level</Label>
+                    <Select name="skillLevel" defaultValue="Beginner">
+                        <SelectTrigger id="skillLevel">
+                            <SelectValue placeholder="Select your skill level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Beginner">Beginner (Just starting out)</SelectItem>
+                            <SelectItem value="Intermediate">Intermediate (Know the basics)</SelectItem>
+                            <SelectItem value="Advanced">Advanced (Comfortable with technical topics)</SelectItem>
+                            <SelectItem value="Expert">Expert (Cybersecurity professional)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                     {state?.error?.skillLevel && <p className="text-xs text-destructive">{state.error.skillLevel[0]}</p>}
+                </div>
+              </>
             )}
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>

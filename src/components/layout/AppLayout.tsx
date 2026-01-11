@@ -9,6 +9,7 @@ import {
   Users,
   MessageSquare,
   Inbox,
+  BarChart3,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,7 +35,6 @@ const navItems = [
 ];
 
 const adminNavItems = [
-    { href: '/admin/quizzes', label: 'Quiz Management' },
     { href: '/admin/users', label: 'User Management' },
     { href: '/admin/feedback', label: 'Quiz Feedback' },
     { href: '/admin/contact-messages', label: 'Contact Messages' },

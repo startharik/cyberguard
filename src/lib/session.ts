@@ -1,3 +1,4 @@
+
 import 'server-only';
 import { cookies } from 'next/headers';
 import type { User } from './types';
@@ -9,7 +10,7 @@ export async function getCurrentUser(): Promise<User | null> {
 
   try {
     const db = await getDb();
-    const user = await db.get<User>('SELECT id, name, email, isAdmin FROM users WHERE id = ?', sessionId);
+    const user = await db.get<User>('SELECT id, name, email, isAdmin, skillLevel FROM users WHERE id = ?', sessionId);
     
     if (user) {
       // The boolean from SQLite will be 0 or 1, so we convert it.

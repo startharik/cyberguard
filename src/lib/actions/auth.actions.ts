@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -9,6 +10,7 @@ import { getDb } from '@/lib/db';
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
+  skillLevel: z.enum(['Beginner', 'Intermediate', 'Advanced', 'Expert']),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters long.')
@@ -35,7 +37,7 @@ export async function registerUser(prevState: any, formData: FormData) {
     };
   }
 
-  const { name, email, password } = validatedFields.data;
+  const { name, email, password, skillLevel } = validatedFields.data;
 
   try {
     const db = await getDb();
@@ -56,15 +58,17 @@ export async function registerUser(prevState: any, formData: FormData) {
       email,
       password,
       isAdmin: userCount === 0, // First user is an admin
+      skillLevel: skillLevel,
     };
 
     await db.run(
-        'INSERT INTO users (id, name, email, password, isAdmin) VALUES (?, ?, ?, ?, ?)',
+        'INSERT INTO users (id, name, email, password, isAdmin, skillLevel) VALUES (?, ?, ?, ?, ?, ?)',
         newUser.id,
         newUser.name,
         newUser.email,
         newUser.password,
-        newUser.isAdmin ? 1 : 0
+        newUser.isAdmin ? 1 : 0,
+        newUser.skillLevel
     );
 
   } catch (e) {

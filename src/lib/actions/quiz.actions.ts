@@ -6,48 +6,62 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/lib/db';
 import { getCurrentUser } from '../session';
-import type { QuizResult, Badge } from '../types';
+import type { Quiz, QuizResult, Badge } from '../types';
+import { generateQuiz } from '@/ai/flows/generate-quiz-flow';
 
-const questionSchema = z.object({
-  text: z.string().min(1, 'Question text is required.'),
-  options: z.array(z.string().min(1, 'Option text is required.')).min(2, 'At least two options are required.'),
-  correctAnswer: z.string().min(1, 'Correct answer is required.'),
-  difficulty: z.enum(['Easy', 'Medium', 'Hard']),
-});
-
-const quizSchema = z.object({
-  title: z.string().min(1, 'Title is required.'),
-  questions: z.array(questionSchema).min(1, 'At least one question is required.'),
+const quizGenerationSchema = z.object({
+  topic: z.string().min(1, 'Topic is required.'),
+  difficulty: z.enum(['Easy', 'Medium', 'Hard', 'Very Hard']),
 });
 
 
-export async function createQuiz(prevState: any, formData: FormData) {
-  const parsedData = JSON.parse(formData.get('payload') as string);
-  const validatedFields = quizSchema.safeParse(parsedData);
-
+export async function generateAndSaveQuiz(prevState: any, formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return { error: 'You must be logged in to generate a quiz.' };
+  }
+  
+  const validatedFields = quizGenerationSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!validatedFields.success) {
     return {
-      error: { fieldErrors: validatedFields.error.flatten().fieldErrors },
-      isInitial: false,
+      error: 'Invalid selection. Please choose a topic and difficulty.',
     };
   }
 
-  const { title, questions } = validatedFields.data;
+  const { topic, difficulty } = validatedFields.data;
   let db;
 
   try {
     db = await getDb();
+
+    // Get user's performance history for the selected topic
+    const history = await db.all<QuizResult[]>(
+        'SELECT score, totalQuestions FROM quiz_results WHERE userId = ? AND topic = ? ORDER BY completedAt DESC LIMIT 5',
+        user.id,
+        topic
+    );
+
+    const performanceHistory = history.map(h => ({
+        score: h.score,
+        total: h.totalQuestions,
+    }));
+
+    // Generate the quiz using the AI flow
+    const quizData = await generateQuiz({
+        topic,
+        difficulty,
+        userSkillLevel: user.skillLevel || 'Beginner',
+        performanceHistory
+    });
+
     await db.run('BEGIN TRANSACTION');
 
     const quizId = crypto.randomUUID();
 
-    await db.run('INSERT INTO quizzes (id, title) VALUES (?, ?)', quizId, title);
+    await db.run('INSERT INTO quizzes (id, title, topic) VALUES (?, ?, ?)', quizId, quizData.title, topic);
 
-    for (const question of questions) {
+    for (const question of quizData.questions) {
       const questionId = crypto.randomUUID();
-      if (!question.options.includes(question.correctAnswer)) {
-          throw new Error(`Correct answer "${question.correctAnswer}" is not in the options for question "${question.text}".`);
-      }
       await db.run(
         'INSERT INTO questions (id, quizId, text, options, correctAnswer, difficulty) VALUES (?, ?, ?, ?, ?, ?)',
         questionId,
@@ -60,91 +74,18 @@ export async function createQuiz(prevState: any, formData: FormData) {
     }
 
     await db.run('COMMIT');
+
+    // Redirect to the newly created quiz
+    return { quizId };
+
   } catch (e) {
     if (db) {
         await db.run('ROLLBACK');
     }
-    console.error(e);
-    const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred. Please try again.';
-    return { error: { form: errorMessage }, isInitial: false, };
+    console.error("Failed to generate quiz:", e);
+    const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred while generating the quiz. Please try again.';
+    return { error: errorMessage };
   }
-
-  revalidatePath('/admin/quizzes');
-  return { error: null, isInitial: false };
-}
-
-export async function updateQuiz(prevState: any, formData: FormData) {
-  const quizId = formData.get('quizId') as string;
-  const parsedData = JSON.parse(formData.get('payload') as string);
-  const validatedFields = quizSchema.safeParse(parsedData);
-
-  if (!validatedFields.success) {
-    return {
-      error: { fieldErrors: validatedFields.error.flatten().fieldErrors },
-      isInitial: false,
-    };
-  }
-  
-  if(!quizId) {
-    return { error: { form: 'Quiz ID is missing.' }, isInitial: false, };
-  }
-
-  const { title, questions } = validatedFields.data;
-  let db;
-  
-  try {
-    db = await getDb();
-    
-    await db.run('BEGIN TRANSACTION');
-    await db.run('UPDATE quizzes SET title = ? WHERE id = ?', title, quizId);
-    await db.run('DELETE FROM questions WHERE quizId = ?', quizId);
-
-    for (const question of questions) {
-        const questionId = crypto.randomUUID();
-        if (!question.options.includes(question.correctAnswer)) {
-            throw new Error(`Correct answer "${question.correctAnswer}" is not in the options for question "${question.text}".`);
-        }
-        await db.run(
-            'INSERT INTO questions (id, quizId, text, options, correctAnswer, difficulty) VALUES (?, ?, ?, ?, ?, ?)',
-            questionId,
-            quizId,
-            question.text,
-            JSON.stringify(question.options),
-            question.correctAnswer,
-            question.difficulty
-        );
-    }
-    await db.run('COMMIT');
-  } catch (e) {
-     if (db) {
-        await db.run('ROLLBACK');
-     }
-     console.error(e);
-     const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred. Please try again.';
-     return { error: { form: errorMessage }, isInitial: false, };
-  }
-
-  revalidatePath('/admin/quizzes');
-  revalidatePath(`/quiz/${quizId}`);
-  return { error: null, isInitial: false };
-}
-
-export async function deleteQuiz(formData: FormData) {
-    const quizId = formData.get('quizId') as string;
-    if (!quizId) {
-        throw new Error('Quiz ID is required for deletion.');
-    }
-
-    try {
-        const db = await getDb();
-        await db.run('DELETE FROM quizzes WHERE id = ?', quizId);
-    } catch (e) {
-        console.error(e);
-        // In a real app, you might want to redirect with an error message.
-        throw new Error('Failed to delete quiz.');
-    }
-
-    revalidatePath('/admin/quizzes');
 }
 
 // ============== BADGE AWARDING LOGIC ==============
@@ -166,25 +107,15 @@ async function awardBadge(userId: string, badgeId: string) {
 
 async function checkPhishingMasterBadge(userId: string) {
     const db = await getDb();
-    const phishingQuizzes = await db.all("SELECT id FROM quizzes WHERE title LIKE '%Phishing%'");
-    if (phishingQuizzes.length === 0) return;
-
-    const phishingQuizIds = phishingQuizzes.map(q => q.id);
+    const phishingQuizCount = await db.get<{ count: number }>(`
+      SELECT COUNT(DISTINCT quizId) as count
+      FROM quiz_results
+      WHERE userId = ? AND topic = 'Phishing' AND (score * 100.0 / totalQuestions) >= 80
+    `, userId);
     
-    const userBestScores = await db.all<{ quizId: string, bestScore: number }>(`
-        SELECT quizId, MAX(score * 100.0 / totalQuestions) as bestScore 
-        FROM quiz_results 
-        WHERE userId = ? AND quizId IN (${phishingQuizIds.map(() => '?').join(',')})
-        GROUP BY quizId
-    `, userId, ...phishingQuizIds);
-
-    const hasMasteredAll = phishingQuizzes.every(quiz => {
-        const result = userBestScores.find(score => score.quizId === quiz.id);
-        return result && result.bestScore >= 80;
-    });
-
-    if (hasMasteredAll) {
-        await awardBadge(userId, 'phishing-master');
+    // Example: Award if they've passed 3+ phishing quizzes with 80%+
+    if (phishingQuizCount && phishingQuizCount.count >= 3) {
+      await awardBadge(userId, 'phishing-master');
     }
 }
 
@@ -195,7 +126,9 @@ async function checkQuizStreakBadges(userId: string) {
   
     const streak = user.streak;
   
-    if (streak >= 3) {
+    if (streak >= 5) {
+      await awardBadge(userId, 'streak-5');
+    } else if (streak >= 3) {
       await awardBadge(userId, 'streak-3');
     }
 }
@@ -209,7 +142,7 @@ async function checkAndAwardBadges(userId: string) {
 }
 
 
-export async function saveQuizResult(quizId: string, score: number, totalQuestions: number, incorrectQuestionIds: string[]) {
+export async function saveQuizResult(quizId: string, topic: string, score: number, totalQuestions: number, incorrectQuestionIds: string[]) {
     const user = await getCurrentUser();
     if (!user) {
         throw new Error('User not authenticated');
@@ -231,10 +164,11 @@ export async function saveQuizResult(quizId: string, score: number, totalQuestio
         const resultId = crypto.randomUUID();
 
         await db.run(
-            'INSERT INTO quiz_results (id, userId, quizId, score, totalQuestions, completedAt) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO quiz_results (id, userId, quizId, topic, score, totalQuestions, completedAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
             resultId,
             user.id,
             quizId,
+            topic,
             score,
             totalQuestions,
             new Date().toISOString()
