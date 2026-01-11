@@ -20,9 +20,9 @@ export function MostAttemptedQuizzes({ data }: MostAttemptedQuizzesProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-headline">Most Attempted Quizzes</CardTitle>
+        <CardTitle className="font-headline">Most Attempted Topics</CardTitle>
         <CardDescription>
-          The top 5 quizzes taken by users.
+          The top 5 quiz topics taken by users.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -32,7 +32,7 @@ export function MostAttemptedQuizzes({ data }: MostAttemptedQuizzesProps) {
               <BarChart data={data} layout="vertical" margin={{ left: 10, right: 30 }}>
                 <XAxis type="number" hide />
                 <YAxis
-                  dataKey="title"
+                  dataKey="topic"
                   type="category"
                   stroke="hsl(var(--muted-foreground))"
                   fontSize={12}

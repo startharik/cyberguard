@@ -2,7 +2,7 @@
 'use client';
 
 import { redirect, useRouter } from 'next/navigation';
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { getCurrentUser } from '@/lib/session';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -51,7 +51,7 @@ function GenerateButton() {
     );
 }
 
-function QuizGeneratorForm({ user }: { user: any }) {
+function QuizGeneratorForm() {
     const router = useRouter();
     const [state, formAction] = useActionState(generateAndSaveQuiz, { error: null, quizId: null });
 
@@ -114,9 +114,7 @@ function QuizGeneratorForm({ user }: { user: any }) {
 
 export default function QuizPage() {
     // This page must be a client component to use hooks for form state and redirection.
-    // We'll fetch the user on the client side inside an effect, though in a real app
-    // you might pass the user from a server component wrapper. For simplicity,
-    // we'll keep it contained here.
+    // We'll fetch the user on the client side inside an effect.
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -131,9 +129,9 @@ export default function QuizPage() {
         });
     }, []);
 
-    if (loading) {
+    if (loading || !user) {
         return (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center min-h-screen">
                 <p>Loading...</p>
             </div>
         )
@@ -142,10 +140,8 @@ export default function QuizPage() {
     return (
         <AppLayout user={user}>
             <div className="flex items-center justify-center">
-                <QuizGeneratorForm user={user} />
+                <QuizGeneratorForm />
             </div>
         </AppLayout>
     );
 }
-// We need to import useState and useEffect from React to manage component state.
-import { useState, useEffect } from 'react';

@@ -74,10 +74,10 @@ async function getAdminDashboardData() {
         LIMIT 5
       `),
       db.all<AttemptedQuizStat>(`
-        SELECT q.title, COUNT(qr.id) as attempts
+        SELECT q.topic, COUNT(qr.id) as attempts
         FROM quiz_results qr
         JOIN quizzes q ON qr.quizId = q.id
-        GROUP BY qr.quizId
+        GROUP BY q.topic
         ORDER BY attempts DESC
         LIMIT 5
       `),
