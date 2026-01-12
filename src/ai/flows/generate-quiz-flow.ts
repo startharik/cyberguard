@@ -82,7 +82,7 @@ INSTRUCTIONS:
 3.  **Generate 5 Questions**: Create exactly five unique multiple-choice questions.
     - Each question must have 2 to 4 options.
     - Ensure one option is unambiguously the correct answer.
-    - The \`correctAnswer\` field MUST exactly match one of the strings in the \`options\` array.
+    - The 'correctAnswer' field MUST exactly match one of the strings in the 'options' array.
     - Vary the question formats (e.g., scenario-based, definition-based).
 
 4.  **Create a Title**: Come up with a creative, engaging title for the quiz that reflects the topic and difficulty.
