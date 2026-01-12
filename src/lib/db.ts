@@ -21,8 +21,7 @@ async function initializeDb(db: Database) {
             email TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
             isAdmin BOOLEAN NOT NULL DEFAULT 0,
-            streak INTEGER NOT NULL DEFAULT 0,
-            skillLevel TEXT NOT NULL DEFAULT 'Beginner'
+            streak INTEGER NOT NULL DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS quizzes (
@@ -107,10 +106,19 @@ async function initializeDb(db: Database) {
     `);
     console.log('Schema initialized.');
 
+    // Migration for adding skillLevel column to users table
+    const columns = await db.all("PRAGMA table_info(users)");
+    if (!columns.some(c => c.name === 'skillLevel')) {
+        console.log("Adding 'skillLevel' column to 'users' table...");
+        await db.exec("ALTER TABLE users ADD COLUMN skillLevel TEXT NOT NULL DEFAULT 'Beginner'");
+        console.log("'skillLevel' column added.");
+    }
+
+
     // Check if data is already seeded
     const userCount = await db.get('SELECT COUNT(*) as count FROM users');
     if (userCount.count > 0) {
-        console.log('Database already seeded.');
+        console.log('Database already seeded or populated.');
         return;
     }
 
