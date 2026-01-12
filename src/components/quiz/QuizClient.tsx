@@ -72,7 +72,7 @@ export function QuizClient({ quiz, user }: { quiz: Quiz, user: User }) {
     if (nextIndex === questions.length) {
         setIsSubmitting(true);
         
-        await saveQuizResult(quiz.id, quiz.topic, score, questions.length, incorrectlyAnsweredIds);
+        await saveQuizResult(user.id, quiz.id, quiz.topic, score, questions.length, incorrectlyAnsweredIds);
 
         const incorrectIdsParam = JSON.stringify(incorrectlyAnsweredIds);
         const queryParams = new URLSearchParams({

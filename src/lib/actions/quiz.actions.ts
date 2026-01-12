@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/lib/db';
 import { getCurrentUser } from '../session';
-import type { Quiz, QuizResult, Badge } from '../types';
+import type { Quiz, QuizResult, Badge, User } from '../types';
 import { generateQuiz } from '@/ai/flows/generate-quiz-flow';
 
 const quizGenerationSchema = z.object({
@@ -134,7 +134,10 @@ async function checkQuizStreakBadges(userId: string) {
 }
 
 
-async function checkAndAwardBadges(userId: string) {
+async function checkAndAwardBadges(userId: string, db: any) {
+    const user = await db.get<User>('SELECT id, streak FROM users WHERE id = ?', userId);
+    if (!user) return;
+
     await checkPhishingMasterBadge(userId);
     await checkQuizStreakBadges(userId);
     // Add calls to other badge checks here
@@ -142,16 +145,15 @@ async function checkAndAwardBadges(userId: string) {
 }
 
 
-export async function saveQuizResult(quizId: string, topic: string, score: number, totalQuestions: number, incorrectQuestionIds: string[]) {
-    const user = await getCurrentUser();
-    if (!user) {
+export async function saveQuizResult(userId: string, quizId: string, topic: string, score: number, totalQuestions: number, incorrectQuestionIds: string[]) {
+    if (!userId) {
         throw new Error('User not authenticated');
     }
     
     // This is a temporary review quiz. Don't save a formal result, but do award a badge.
     if (quizId.startsWith('review-')) {
         try {
-            await awardBadge(user.id, 'reviewer');
+            await awardBadge(userId, 'reviewer');
             revalidatePath('/dashboard');
         } catch (e) {
             console.error('Failed to award reviewer badge:', e);
@@ -159,14 +161,17 @@ export async function saveQuizResult(quizId: string, topic: string, score: numbe
         return;
     }
 
+    let db;
     try {
-        const db = await getDb();
+        db = await getDb();
         const resultId = crypto.randomUUID();
+
+        await db.run('BEGIN TRANSACTION');
 
         await db.run(
             'INSERT INTO quiz_results (id, userId, quizId, topic, score, totalQuestions, completedAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
             resultId,
-            user.id,
+            userId,
             quizId,
             topic,
             score,
@@ -187,26 +192,30 @@ export async function saveQuizResult(quizId: string, topic: string, score: numbe
         // Update user's streak
         const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
         if (percentage >= 75) {
-            await db.run('UPDATE users SET streak = streak + 1 WHERE id = ?', user.id);
+            await db.run('UPDATE users SET streak = streak + 1 WHERE id = ?', userId);
         } else {
-            await db.run('UPDATE users SET streak = 0 WHERE id = ?', user.id);
+            await db.run('UPDATE users SET streak = 0 WHERE id = ?', userId);
         }
 
         // Award first quiz badge
-        await awardBadge(user.id, 'quiz-initiate');
+        await awardBadge(userId, 'quiz-initiate');
         
         // Award perfect score badge
         if (percentage === 100) {
-            await awardBadge(user.id, 'perfect-score');
+            await awardBadge(userId, 'perfect-score');
         }
 
-
         // After saving the result, check if the user earned any badges
-        await checkAndAwardBadges(user.id);
+        await checkAndAwardBadges(userId, db);
+
+        await db.run('COMMIT');
         
         revalidatePath('/dashboard');
         revalidatePath('/quiz');
     } catch (e) {
+        if (db) {
+            await db.run('ROLLBACK');
+        }
         console.error('Failed to save quiz result:', e);
     }
 }
