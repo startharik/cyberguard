@@ -17,7 +17,7 @@ export async function sendEmail(payload: EmailPayload) {
 
     const apiPayload = {
         api_key: apiKey,
-        sender: "tharik@leprofile.com",
+        sender: "CyberGuardian <tharik@leprofile.com>",
         ...payload,
     };
 
