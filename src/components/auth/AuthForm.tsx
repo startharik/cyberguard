@@ -157,7 +157,17 @@ export function AuthForm({ mode }: { mode: Mode }) {
               {state?.error?.email && <p className="text-xs text-destructive">{state.error.email[0]}</p>}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+               <div className="flex items-center">
+                 <Label htmlFor="password">Password</Label>
+                 {mode === 'login' && (
+                    <Link
+                        href="/forgot-password"
+                        className="ml-auto inline-block text-sm text-primary hover:underline"
+                    >
+                        Forgot your password?
+                    </Link>
+                 )}
+               </div>
               <Input 
                 id="password" 
                 name="password" 

@@ -10,6 +10,8 @@ export interface User {
   isAdmin?: boolean;
   streak?: number;
   skillLevel?: SkillLevel;
+  resetToken?: string | null;
+  resetTokenExpiresAt?: string | null;
 }
 
 export type Difficulty = 'Easy' | 'Medium' | 'Hard' | 'Very Hard';

@@ -21,7 +21,9 @@ async function initializeDb(db: Database) {
             email TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
             isAdmin BOOLEAN NOT NULL DEFAULT 0,
-            streak INTEGER NOT NULL DEFAULT 0
+            streak INTEGER NOT NULL DEFAULT 0,
+            resetToken TEXT,
+            resetTokenExpiresAt DATETIME
         );
 
         CREATE TABLE IF NOT EXISTS quizzes (
@@ -112,6 +114,16 @@ async function initializeDb(db: Database) {
         console.log("Adding 'skillLevel' column to 'users' table...");
         await db.exec("ALTER TABLE users ADD COLUMN skillLevel TEXT NOT NULL DEFAULT 'Beginner'");
         console.log("'skillLevel' column added.");
+    }
+    if (!columns.some(c => c.name === 'resetToken')) {
+        console.log("Adding 'resetToken' column to 'users' table...");
+        await db.exec("ALTER TABLE users ADD COLUMN resetToken TEXT");
+        console.log("'resetToken' column added.");
+    }
+    if (!columns.some(c => c.name === 'resetTokenExpiresAt')) {
+        console.log("Adding 'resetTokenExpiresAt' column to 'users' table...");
+        await db.exec("ALTER TABLE users ADD COLUMN resetTokenExpiresAt DATETIME");
+        console.log("'resetTokenExpiresAt' column added.");
     }
 
 
