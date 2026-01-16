@@ -10,9 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut } from 'lucide-react';
+import { LogOut, User as UserIcon } from 'lucide-react';
 import { logout } from '@/lib/actions/auth.actions';
 import type { User } from '@/lib/types';
+import Link from 'next/link';
 
 export function UserNav({ user }: { user: User }) {
   const getInitials = (name: string) => {
@@ -42,8 +43,14 @@ export function UserNav({ user }: { user: User }) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {/* Add more items here if needed */}
+          <DropdownMenuItem asChild>
+            <Link href="/profile/edit">
+              <UserIcon className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </Link>
+          </DropdownMenuItem>
         </DropdownMenuGroup>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => logout()}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
