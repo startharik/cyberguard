@@ -17,7 +17,7 @@ export async function sendEmail(payload: EmailPayload) {
 
     const apiPayload = {
         api_key: apiKey,
-        sender: "tharik@leprofile.com", // Using the verified sender address
+        sender: "tharik@leprofile.com",
         ...payload,
     };
 
@@ -45,28 +45,25 @@ export async function sendEmail(payload: EmailPayload) {
     }
 }
 
-export async function sendPasswordResetEmail(to: string, token: string) {
-    const resetLink = `http://localhost:9002/reset-password?token=${token}`;
-
+export async function sendPasswordResetOtp(to: string, otp: string) {
     const htmlBody = `
         <h2>Password Reset Request</h2>
-        <p>You requested a password reset. Click the link below to set a new password:</p>
-        <a href="${resetLink}" target="_blank">Reset Password</a>
-        <p>This link will expire in 1 hour.</p>
+        <p>Your password reset code is:</p>
+        <h3 style="font-size: 24px; letter-spacing: 2px; font-family: monospace;">${otp}</h3>
+        <p>This code will expire in 1 hour.</p>
         <p>If you did not request a password reset, please ignore this email.</p>
     `;
 
     const textBody = `
         Password Reset Request\n
-        You requested a password reset. Copy and paste the following link into your browser to set a new password:\n
-        ${resetLink}\n
-        This link will expire in 1 hour.\n
+        Your password reset code is: ${otp}\n
+        This code will expire in 1 hour.\n
         If you did not request a password reset, please ignore this email.
     `;
 
     await sendEmail({
         to: [to],
-        subject: 'Your CyberGuardian Password Reset Link',
+        subject: 'Your CyberGuardian Password Reset Code',
         html_body: htmlBody,
         text_body: textBody,
     });

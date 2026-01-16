@@ -80,7 +80,7 @@ function PasswordStrength({ password }: { password: any }) {
     );
 }
 
-export function ResetPasswordForm({ token }: { token: string }) {
+export function ResetPasswordForm({ email }: { email: string }) {
     const router = useRouter();
     const [state, formAction] = useActionState(resetPassword, { error: null });
     const [password, setPassword] = useState('');
@@ -90,19 +90,32 @@ export function ResetPasswordForm({ token }: { token: string }) {
         <CardHeader>
           <CardTitle className="font-headline text-2xl">Reset Your Password</CardTitle>
           <CardDescription>
-            Enter a new password for your account.
+            A code was sent to <span className="font-medium">{email}</span>. Please enter it below.
           </CardDescription>
         </CardHeader>
         <form action={formAction}>
           <CardContent className="grid gap-4">
-             <input type="hidden" name="token" value={token} />
+             <input type="hidden" name="email" value={email} />
             {state?.error?.form && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{state.error.form}</AlertDescription>
+                <AlertDescription>{Array.isArray(state.error.form) ? state.error.form.join(' ') : state.error.form}</AlertDescription>
               </Alert>
             )}
+            <div className="grid gap-2">
+              <Label htmlFor="token">Reset Code (OTP)</Label>
+              <Input
+                id="token"
+                name="token"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                required
+              />
+              {state?.error?.token && <p className="text-xs text-destructive">{state.error.token[0]}</p>}
+            </div>
             <div className="grid gap-2">
               <Label htmlFor="password">New Password</Label>
               <Input

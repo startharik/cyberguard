@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { User } from '@/lib/types';
 import { getDb } from '@/lib/db';
-import { sendPasswordResetEmail } from './email.actions';
+import { sendPasswordResetOtp } from './email.actions';
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -30,11 +30,6 @@ const loginSchema = z.object({
 });
 
 const emailSchema = z.string().email('Please enter a valid email address.');
-
-const resetPasswordSchema = z.object({
-    token: z.string().min(1, 'Reset token is required.'),
-    password: z.string().min(8, 'Password must be at least 8 characters long.'),
-});
 
 export async function registerUser(prevState: any, formData: FormData) {
   const validatedFields = registerSchema.safeParse(Object.fromEntries(formData.entries()));
@@ -125,7 +120,7 @@ export async function logout() {
   redirect('/login');
 }
 
-export async function sendPasswordResetLink(prevState: any, formData: FormData) {
+export async function sendPasswordResetCode(prevState: any, formData: FormData) {
     const email = formData.get('email') as string;
     const validatedEmail = emailSchema.safeParse(email);
 
@@ -137,34 +132,34 @@ export async function sendPasswordResetLink(prevState: any, formData: FormData) 
         const db = await getDb();
         const user = await db.get<User>('SELECT id, email FROM users WHERE email = ?', email);
 
-        if (!user) {
-            // To prevent user enumeration, we show a success message even if the user doesn't exist.
-            return { success: 'If an account with that email exists, a password reset link has been sent.' };
+        if (user) {
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            const expiresAt = new Date(Date.now() + 3600 * 1000); // 1 hour from now
+
+            await db.run(
+                'UPDATE users SET resetToken = ?, resetTokenExpiresAt = ? WHERE id = ?',
+                otp,
+                expiresAt.toISOString(),
+                user.id
+            );
+
+            await sendPasswordResetOtp(user.email, otp);
         }
-
-        const token = crypto.randomUUID();
-        const expiresAt = new Date(Date.now() + 3600 * 1000); // 1 hour from now
-
-        await db.run(
-            'UPDATE users SET resetToken = ?, resetTokenExpiresAt = ? WHERE id = ?',
-            token,
-            expiresAt.toISOString(),
-            user.id
-        );
-
-        await sendPasswordResetEmail(user.email, token);
-
-        return { success: 'If an account with that email exists, a password reset link has been sent.' };
-
     } catch (e) {
         console.error('Password reset error:', e);
-        // Generic error message to prevent leaking information
-        return { error: 'An unexpected error occurred. Please try again later.' };
     }
+    
+    redirect(`/reset-password?email=${encodeURIComponent(email)}`);
 }
 
 
 export async function resetPassword(prevState: any, formData: FormData) {
+    const resetPasswordSchema = z.object({
+        email: z.string().email(),
+        token: z.string().length(6, 'Your OTP must be 6 digits.'),
+        password: z.string().min(8, 'Password must be at least 8 characters long.'),
+    });
+
     const validatedFields = resetPasswordSchema.safeParse(Object.fromEntries(formData.entries()));
 
     if (!validatedFields.success) {
@@ -173,23 +168,22 @@ export async function resetPassword(prevState: any, formData: FormData) {
         };
     }
     
-    const { token, password } = validatedFields.data;
+    const { email, token, password } = validatedFields.data;
 
     try {
         const db = await getDb();
-        const user = await db.get<User>('SELECT * FROM users WHERE resetToken = ?', token);
+        const user = await db.get<User>('SELECT * FROM users WHERE email = ?', email);
 
-        if (!user) {
-            return { error: { form: 'Invalid reset token. Please try again.' } };
+        if (!user || !user.resetToken || user.resetToken !== token) {
+            return { error: { form: ['Invalid OTP. Please check the code and try again.'] } };
         }
 
         const now = new Date();
         const expiresAt = new Date(user.resetTokenExpiresAt!);
         if (now > expiresAt) {
-            return { error: { form: 'Your password reset token has expired. Please request a new one.' } };
+            return { error: { form: ['Your OTP has expired. Please request a new one.'] } };
         }
         
-        // In a real app, hash the password!
         await db.run(
             'UPDATE users SET password = ?, resetToken = NULL, resetTokenExpiresAt = NULL WHERE id = ?',
             password,
@@ -198,7 +192,7 @@ export async function resetPassword(prevState: any, formData: FormData) {
         
     } catch (e) {
         console.error('Reset password error:', e);
-        return { error: { form: 'An unexpected error occurred. Please try again.' } };
+        return { error: { form: ['An unexpected error occurred. Please try again.'] } };
     }
 
     redirect('/login?reset=success');

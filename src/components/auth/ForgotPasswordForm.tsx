@@ -16,56 +16,33 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, MailCheck } from 'lucide-react';
-import { sendPasswordResetLink } from '@/lib/actions/auth.actions';
+import { AlertCircle } from 'lucide-react';
+import { sendPasswordResetCode } from '@/lib/actions/auth.actions';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" className="w-full" disabled={pending}>
       {pending && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-background mr-2"></div>}
-      {pending ? 'Sending Link...' : 'Send Password Reset Link'}
+      {pending ? 'Sending Code...' : 'Send Password Reset Code'}
     </Button>
   );
 }
 
 export function ForgotPasswordForm() {
-  const [state, formAction] = useActionState(sendPasswordResetLink, { error: null, success: null });
-
-  if (state.success) {
-      return (
-          <Card className="w-full max-w-sm">
-             <CardHeader className="text-center">
-                <div className="flex justify-center mb-4">
-                     <MailCheck className="h-12 w-12 text-primary" />
-                </div>
-                <CardTitle className="font-headline text-2xl">Check Your Email</CardTitle>
-             </CardHeader>
-             <CardContent>
-                <AlertDescription className="text-center">
-                    {state.success}
-                </AlertDescription>
-             </CardContent>
-             <CardFooter>
-                 <Button asChild className="w-full">
-                     <Link href="/login">Back to Login</Link>
-                 </Button>
-             </CardFooter>
-          </Card>
-      )
-  }
+  const [state, formAction] = useActionState(sendPasswordResetCode, { error: null });
 
   return (
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="font-headline text-2xl">Forgot Password</CardTitle>
           <CardDescription>
-            Enter your email and we'll send you a link to reset your password.
+            Enter your email and we'll send you a 6-digit code to reset your password.
           </CardDescription>
         </CardHeader>
         <form action={formAction}>
           <CardContent className="grid gap-4">
-            {state.error && (
+            {state?.error && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Error</AlertTitle>
