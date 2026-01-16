@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
   const isAuthRoute = authRoutes.includes(pathname);
 
   // All routes are protected by default, except for these public ones
-  const publicRoutes = ['/', '/about', '/contact'];
+  const publicRoutes = ['/', '/about', '/contact', '/forgot-password', '/reset-password'];
   const isPublicRoute = publicRoutes.includes(pathname);
 
   // If the user has a session cookie...
