@@ -1,9 +1,10 @@
 
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -30,7 +31,14 @@ function SubmitButton() {
 }
 
 export function ForgotPasswordForm() {
-  const [state, formAction] = useActionState(sendPasswordResetCode, { error: null });
+  const router = useRouter();
+  const [state, formAction] = useActionState(sendPasswordResetCode, { error: null, success: false, email: '' });
+
+  useEffect(() => {
+    if (state.success && state.email) {
+      router.push(`/reset-password?email=${encodeURIComponent(state.email)}`);
+    }
+  }, [state, router]);
 
   return (
       <Card className="w-full max-w-sm">

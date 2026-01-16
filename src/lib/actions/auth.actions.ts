@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -120,7 +119,7 @@ export async function logout() {
   redirect('/login');
 }
 
-export async function sendPasswordResetCode(prevState: any, formData: FormData) {
+export async function sendPasswordResetCode(prevState: any, formData: FormData): Promise<{ error?: string | null, success?: boolean, email?: string}> {
     const email = formData.get('email') as string;
     const validatedEmail = emailSchema.safeParse(email);
 
@@ -149,7 +148,7 @@ export async function sendPasswordResetCode(prevState: any, formData: FormData) 
         console.error('Password reset error:', e);
     }
     
-    redirect(`/reset-password?email=${encodeURIComponent(email)}`);
+    return { success: true, email: email };
 }
 
 
