@@ -17,7 +17,7 @@ export async function sendEmail(payload: EmailPayload) {
 
     const apiPayload = {
         api_key: apiKey,
-        sender: "noreply@cyberguardian.app", // A generic sender
+        sender: "tharik@leprofile.com", // Using the verified sender address
         ...payload,
     };
 
